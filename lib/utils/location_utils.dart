@@ -14,10 +14,12 @@ class LocationUtils {
     if (!serviceEnabled) {
       Get.defaultDialog(
         title: 'Location Services Disabled',
-        middleText: 'Location services are disabled. Would you like to enable them?',
+        middleText:
+            'Location services are disabled. Would you like to enable them?',
         textConfirm: 'Yes',
         onConfirm: () async {
           await Geolocator.openLocationSettings();
+          Get.back();
         },
         textCancel: 'No',
         onCancel: () {

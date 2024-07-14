@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import '../map_config/map_utils.dart';
 import '../utils/location_utils.dart';
@@ -84,15 +85,17 @@ class SearchPageState extends State<SearchPage> {
     } catch (e) {
       print("Error searching locations: $e");
       setState(() => _isSearchLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to search locations')),
+      Get.defaultDialog(
+        title: "Failed to search locations",
+        onConfirm: () {
+          Get.back();
+        },
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    print(_center);
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -160,6 +163,30 @@ class SearchPageState extends State<SearchPage> {
                         size: 40.0,
                       ),
                     ),
+                  const Marker(
+                    width: 80.0,
+                    height: 80.0,
+                    point: LatLng(28.61, 77.36),
+                    child: Icon(
+                      Icons.location_on,
+                      color: Colors.red,
+                      size: 40.0,
+                    ),
+                  ),
+                ],
+              ),
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                    strokeWidth: 2,
+                    pattern: StrokePattern.dashed(segments: const [10, 10]),
+                    points: [
+                      const LatLng(28.61, 77.36),
+                      _center,
+                      const LatLng(28.61, 77.36)
+                    ],
+                    color: Colors.blue,
+                  ),
                 ],
               ),
             ],
