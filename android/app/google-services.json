@@ -9,10 +9,15 @@
       "client_info": {
         "mobilesdk_app_id": "1:940248395110:android:ca3c10859a0f0aaacaeca7",
         "android_client_info": {
-          "package_name": "com.example.family_locator"
+          "package_name": "com.example.family"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "940248395110-ih8ca31n3docbbqu8iek19r3242dtg30.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBMr3agb7C8_98VSo4OtPnaojTcQa0J_ks"
@@ -20,7 +25,63 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "940248395110-ih8ca31n3docbbqu8iek19r3242dtg30.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "940248395110-d42uq2h8atm9n22littv4kksulac8i9g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.familyLocator"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:940248395110:android:a52007fa3eb7e5dacaeca7",
+        "android_client_info": {
+          "package_name": "com.example.family_locator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "940248395110-bo1uce3sldhdf0a514sl97o2u8bp6f8c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.family_locator",
+            "certificate_hash": "e8beed902452b387a60a539605c7e4db2aba4a01"
+          }
+        },
+        {
+          "client_id": "940248395110-ih8ca31n3docbbqu8iek19r3242dtg30.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMr3agb7C8_98VSo4OtPnaojTcQa0J_ks"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "940248395110-ih8ca31n3docbbqu8iek19r3242dtg30.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "940248395110-d42uq2h8atm9n22littv4kksulac8i9g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.familyLocator"
+              }
+            }
+          ]
         }
       }
     }

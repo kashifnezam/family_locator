@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:family_locator/utils/firebasae_db.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -19,6 +20,7 @@ class SearchPageState extends State<SearchPage> {
   final MapController _mapController = MapController();
 
   bool _isSearching = false;
+  bool _hideTools = false;
   String _searchText = "";
   List<dynamic> _searchResults = [];
   LatLng _center = const LatLng(18.55173625, 73.82375839545352);
@@ -97,35 +99,36 @@ class SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: _isSearching
-            ? TextField(
+      appBar: _isSearching
+          ? AppBar(
+              title: TextField(
                 controller: _searchController,
                 style: const TextStyle(color: Colors.black),
                 decoration: const InputDecoration(
                   hintText: 'Search...',
-                  hintStyle: TextStyle(color: Colors.white54),
+                  hintStyle: TextStyle(color: Colors.black),
                   border: InputBorder.none,
                 ),
-              )
-            : const Text('Flutter Search with Map'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                if (_isSearching) {
-                  _searchController.clear();
-                }
-                _isSearching = !_isSearching;
-                _searchResults = [];
-              });
-            },
-          ),
-        ],
-      ),
+              ),
+              actions: <Widget>[
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() {
+                      if (_isSearching) {
+                        _searchController.clear();
+                      }
+                      _isSearching = !_isSearching;
+                      _searchResults = [];
+                    });
+                  },
+                ),
+              ],
+            )
+          : null,
       body: Stack(
         children: [
+          const Icon(Icons.search),
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -135,9 +138,16 @@ class SearchPageState extends State<SearchPage> {
               maxZoom: 22,
             ),
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.app',
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _hideTools = !_hideTools;
+                  });
+                },
+                child: TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.app',
+                ),
               ),
               MarkerLayer(
                 markers: [
@@ -211,6 +221,38 @@ class SearchPageState extends State<SearchPage> {
 
                 _mapController.move(newCenter, _zoom);
               },
+            ),
+          if (!_isSearching && _hideTools)
+            Container(
+              margin: const EdgeInsets.only(top: 35, left: 10),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.search,
+                  size: 50,
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (_isSearching) {
+                      _searchController.clear();
+                    }
+                    _isSearching = !_isSearching;
+                    _searchResults = [];
+                  });
+                },
+              ),
+            ),
+          if (_hideTools)
+            Container(
+              margin: EdgeInsets.only(top: 35, left: Get.width - 100),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.chat,
+                  size: 30,
+                ),
+                onPressed: () {
+                  Get.to(() => const MyData());
+                },
+              ),
             ),
         ],
       ),

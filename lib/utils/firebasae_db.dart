@@ -1,0 +1,38 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
+class MyData extends StatefulWidget {
+  const MyData({super.key});
+
+  @override
+  State<MyData> createState() => _MyDataState();
+}
+
+class _MyDataState extends State<MyData> {
+  @override
+  Widget build(BuildContext context) {
+    var myData = [];
+    return Scaffold(
+      body: StreamBuilder(
+          stream: FirebaseFirestore.instance.collection('user').snapshots(),
+          builder: (context, snapshot) {
+            myData.clear();
+            if (snapshot.hasData) {
+              final data = snapshot.data?.docs;
+              for (var i in data!) {
+                debugPrint("----");
+                print(i.data());
+                myData.add(i.data());
+                debugPrint("----");
+              }
+            }
+            return ListView.builder(
+              itemBuilder: (context, index) {
+                return Text("Name: ${myData[index]["name"]}");
+              },
+              itemCount: myData.length,
+            );
+          }),
+    );
+  }
+}

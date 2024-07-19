@@ -9,7 +9,6 @@ class LocationUtils {
   }) async {
     bool serviceEnabled;
     LocationPermission permission;
-
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       Get.defaultDialog(
