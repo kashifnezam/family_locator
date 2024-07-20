@@ -1,6 +1,8 @@
+import 'package:family_locator/pages/search_page.dart';
 import 'package:family_locator/utils/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:get/get.dart';
 
 class GoogleSignIn extends StatelessWidget {
   const GoogleSignIn({super.key});
@@ -18,6 +20,12 @@ class GoogleSignIn extends StatelessWidget {
               Buttons.Google,
               onPressed: () {
                 googleLogin();
+              },
+            ),
+            SignInButton(
+              Buttons.Email,
+              onPressed: () {
+                Get.off(() => const SearchPage());
               },
             ),
           ],

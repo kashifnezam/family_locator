@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'dart:developer' as dev;
 
 class MyData extends StatefulWidget {
   const MyData({super.key});
@@ -20,11 +23,15 @@ class _MyDataState extends State<MyData> {
             if (snapshot.hasData) {
               final data = snapshot.data?.docs;
               for (var i in data!) {
-                debugPrint("----");
-                print(i.data());
+                // debugPrint("----");
+                // print(i.data());
                 myData.add(i.data());
-                debugPrint("----");
+                dev.log(jsonEncode(i.data()));
+                //debugPrint("----");
               }
+
+              // print("-----${myData}------------");
+              print(myData);
             }
             return ListView.builder(
               itemBuilder: (context, index) {

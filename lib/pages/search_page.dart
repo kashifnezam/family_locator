@@ -1,10 +1,15 @@
 import 'dart:async';
-import 'package:family_locator/utils/firebasae_db.dart';
+import 'package:family_locator/api/firebase_api.dart';
+import 'package:family_locator/models/anonymous_model.dart';
+import 'package:family_locator/models/user_model.dart';
+import 'package:family_locator/utils/constants.dart';
+import 'package:family_locator/utils/dialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
-import '../map_config/map_utils.dart';
+import '../api/map_utils.dart';
 import '../utils/location_utils.dart';
 import '../widgets/search_results_list.dart';
 
@@ -23,17 +28,22 @@ class SearchPageState extends State<SearchPage> {
   bool _hideTools = false;
   String _searchText = "";
   List<dynamic> _searchResults = [];
-  LatLng _center = const LatLng(18.55173625, 73.82375839545352);
-  double _zoom = 9.6;
+  LatLng _center = const LatLng(28.6, 77.36);
+  double _zoom = 5;
   LatLng? _markerPosition;
   LatLng? _currentLocation;
   bool _isSearchLoading = false;
   Timer? _debounce;
+  bool isLocPer = false;
 
   @override
-  void initState() {
+  initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    setState(() {
+      isLocPer = true;
+    });
+
     LocationUtils.getCurrentLocation(
       onLocationLoaded: (location) {
         print("-------$location-------");
@@ -41,11 +51,20 @@ class SearchPageState extends State<SearchPage> {
           _currentLocation = location;
           _center = location;
           _zoom = 15;
-          _mapController.move(_center, _zoom);
+
+          setState(() {
+            isLocPer = false;
+          });
         });
       },
       onError: (error) {
         print("Error getting location: $error");
+        setState(() {
+          isLocPer = false;
+        });
+      },
+      onStartMoving: () {
+        AppConstants.log.i("Person Starts Moving");
       },
     );
   }
@@ -67,6 +86,26 @@ class SearchPageState extends State<SearchPage> {
           _searchLocations(_searchText);
         });
       }
+    });
+  }
+
+  getDetails() async {
+    AppConstants.log.i(await LocationUtils.getMacAddress());
+    String ip = LocationUtils.getLocalIPAddress().toString();
+    AppConstants.log.i(ip);
+    await LocationUtils.getDeviceId().then((e) {
+      AppConstants.log.i(e);
+      FirebaseApi.addDataIfNotExists(
+          "anonymopus",
+          "123456",
+          AnonymousModel(
+            currLoc: _currentLocation.toString(),
+            groupId: ['1234'],
+            id: e,
+            ipAddress: ip,
+            name: "munna",
+            
+          ));
     });
   }
 
@@ -134,8 +173,6 @@ class SearchPageState extends State<SearchPage> {
             options: MapOptions(
               initialCenter: _center,
               initialZoom: _zoom,
-              minZoom: 5,
-              maxZoom: 22,
             ),
             children: [
               GestureDetector(
@@ -146,7 +183,6 @@ class SearchPageState extends State<SearchPage> {
                 },
                 child: TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.app',
                 ),
               ),
               MarkerLayer(
@@ -230,7 +266,7 @@ class SearchPageState extends State<SearchPage> {
                   Icons.search,
                   size: 50,
                 ),
-                onPressed: () {
+                onPressed: () async {
                   setState(() {
                     if (_isSearching) {
                       _searchController.clear();
@@ -238,6 +274,12 @@ class SearchPageState extends State<SearchPage> {
                     _isSearching = !_isSearching;
                     _searchResults = [];
                   });
+                  AppConstants.log.d(await FirebaseApi.addDataToDocument(
+                      "user",
+                      FirebaseAuth.instance.currentUser!.uid.toString(),
+                      UserModel(
+                          currLoc: _currentLocation.toString(),
+                          name: "Kashif Don")));
                 },
               ),
             ),
@@ -250,10 +292,12 @@ class SearchPageState extends State<SearchPage> {
                   size: 30,
                 ),
                 onPressed: () {
-                  Get.to(() => const MyData());
+                  //  Get.to(() => const MyData());
+                  getDetails();
                 },
               ),
             ),
+          if (isLocPer) DialogUtil.buildCircularProgressIndicator(),
         ],
       ),
     );

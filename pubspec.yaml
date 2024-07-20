@@ -32,13 +32,16 @@ dependencies:
     sdk: flutter
   get: ^4.6.6
   firebase_core: ^3.2.0
-  flutter_map: ^7.0.2
-  geolocator: ^12.0.0
-  latlong2: ^0.9.1
-  flutter_signin_button: ^2.0.0
-  google_sign_in: ^6.2.1
+  flutter_map: ^7.0.2  # Maps like leaflet , Google etc
+  geolocator: ^12.0.0  # To get Live Location
+  latlong2: ^0.9.1  
+  flutter_signin_button: ^2.0.0 #Sign Button of Different Social Sites Platform
+  google_sign_in: ^6.2.1  #Sign in through Google Logged in email
   firebase_auth: ^5.1.2
   cloud_firestore: ^5.1.0
+  logger: ^2.4.0    #Printing in formatted way on concole
+  network_info_plus: ^5.0.3  #To get the ip and Mac Address
+  device_info_plus: ^8.0.0  #For device id
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
