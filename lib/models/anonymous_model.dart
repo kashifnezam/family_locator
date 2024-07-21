@@ -3,6 +3,7 @@ class AnonymousModel {
     required this.currLoc,
     this.name,
     this.id,
+    this.macAd,
     this.ipAddress,
     this.added,
     this.groupId,
@@ -11,6 +12,7 @@ class AnonymousModel {
   final String currLoc;
   String? name;
   String? id;
+  String? macAd;
   String? ipAddress;
   String? added;
   final List<String>? groupId;
@@ -20,6 +22,7 @@ class AnonymousModel {
       currLoc: json['currLoc'] ?? '',
       name: json['name'] ?? '',
       id: json['id'] ?? '',
+      macAd: json['macAd'] ?? '',
       added: json['added'] ?? '',
       ipAddress: json['ipAddress'] ?? '',
       groupId: List<String>.from(json['groupId'] ?? []),
@@ -32,6 +35,7 @@ class AnonymousModel {
       'currLoc': currLoc,
       'name': name,
       'id': id,
+      'macAd': macAd,
       'added': added,
       'ipAddress': ipAddress,
       'groupId': groupId,
@@ -41,6 +45,6 @@ class AnonymousModel {
   // Override toString() method for better representation
   @override
   String toString() {
-    return 'AnonymousModel(currLoc: $currLoc, id: $id, added: $added, name: $name , ipAddress: $ipAddress, groupId: $groupId)';
+    return 'AnonymousModel(currLoc: $currLoc, id: $id, macAd: $macAd, added: $added, name: $name , ipAddress: $ipAddress, groupId: $groupId)';
   }
 }

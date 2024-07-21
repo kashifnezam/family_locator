@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class DialogUtil {
+class WidgetUtil {
   static Widget buildCircularProgressIndicator() {
     return const Center(
       child: CircularProgressIndicator(),

@@ -3,9 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'pages/search_page.dart';
-                                                                                                                                      
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -17,6 +16,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  GetMaterialApp(home: (FirebaseAuth.instance.currentUser != null) ? const SearchPage(): const GoogleSignIn());
+    return GetMaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: (FirebaseAuth.instance.currentUser != null)
+            ? const SearchPage()
+            : const GoogleSignIn());
   }
 }

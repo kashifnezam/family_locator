@@ -7,7 +7,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 
 class LocationUtils {
   static LatLng? _previousLocation;
-  static double distanceThreshold = 10.0; // Meters
+  static double distanceThreshold = 15.0; // Meters
 
   static void getCurrentLocation({
     required Function(LatLng) onLocationLoaded,
@@ -44,11 +44,12 @@ class LocationUtils {
       // Check if the user has started moving
       if (_previousLocation != null &&
           Geolocator.distanceBetween(
-            _previousLocation!.latitude,
-            _previousLocation!.longitude,
-            currentLocation.latitude,
-            currentLocation.longitude,
-          ) >= distanceThreshold) {
+                _previousLocation!.latitude,
+                _previousLocation!.longitude,
+                currentLocation.latitude,
+                currentLocation.longitude,
+              ) >=
+              distanceThreshold) {
         onStartMoving();
       }
 
@@ -62,7 +63,7 @@ class LocationUtils {
     });
   }
 
-   static Future<String?> getLocalIPAddress() async {
+  static Future<String?> getLocalIPAddress() async {
     try {
       final info = NetworkInfo();
       // Get the local IP address
@@ -106,3 +107,5 @@ class LocationUtils {
     return deviceId;
   }
 }
+
+

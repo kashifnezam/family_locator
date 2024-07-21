@@ -1,4 +1,4 @@
-import 'package:family_locator/utils/dialog.dart';
+import 'package:family_locator/widgets/widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -24,7 +24,7 @@ Future<UserCredential> signInWithGoogle() async {
 }
 
 googleLogin() {
-  DialogUtil.buildCircularProgressIndicator();
+  WidgetUtil.buildCircularProgressIndicator();
   signInWithGoogle().then((user) {
     print(user);
     Get.off(() => const SearchPage());

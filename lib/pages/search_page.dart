@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/models/anonymous_model.dart';
-import 'package:family_locator/models/user_model.dart';
+import 'package:family_locator/pages/room_dialogue.dart';
 import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/utils/dialog.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:family_locator/utils/device_info.dart';
+import 'package:family_locator/widgets/button_widget.dart';
+import 'package:family_locator/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -39,6 +38,7 @@ class SearchPageState extends State<SearchPage> {
   @override
   initState() {
     super.initState();
+    DeviceInfo.getDetails();
     _searchController.addListener(_onSearchChanged);
     setState(() {
       isLocPer = true;
@@ -46,7 +46,6 @@ class SearchPageState extends State<SearchPage> {
 
     LocationUtils.getCurrentLocation(
       onLocationLoaded: (location) {
-        print("-------$location-------");
         setState(() {
           _currentLocation = location;
           _center = location;
@@ -79,33 +78,13 @@ class SearchPageState extends State<SearchPage> {
 
   void _onSearchChanged() {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
+    _debounce = Timer(const Duration(milliseconds: 1500), () {
       if (_searchController.text != _searchText) {
         setState(() {
           _searchText = _searchController.text;
           _searchLocations(_searchText);
         });
       }
-    });
-  }
-
-  getDetails() async {
-    AppConstants.log.i(await LocationUtils.getMacAddress());
-    String ip = LocationUtils.getLocalIPAddress().toString();
-    AppConstants.log.i(ip);
-    await LocationUtils.getDeviceId().then((e) {
-      AppConstants.log.i(e);
-      FirebaseApi.addDataIfNotExists(
-          "anonymopus",
-          "123456",
-          AnonymousModel(
-            currLoc: _currentLocation.toString(),
-            groupId: ['1234'],
-            id: e,
-            ipAddress: ip,
-            name: "munna",
-            
-          ));
     });
   }
 
@@ -209,30 +188,6 @@ class SearchPageState extends State<SearchPage> {
                         size: 40.0,
                       ),
                     ),
-                  const Marker(
-                    width: 80.0,
-                    height: 80.0,
-                    point: LatLng(28.61, 77.36),
-                    child: Icon(
-                      Icons.location_on,
-                      color: Colors.red,
-                      size: 40.0,
-                    ),
-                  ),
-                ],
-              ),
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    strokeWidth: 2,
-                    pattern: StrokePattern.dashed(segments: const [10, 10]),
-                    points: [
-                      const LatLng(28.61, 77.36),
-                      _center,
-                      const LatLng(28.61, 77.36)
-                    ],
-                    color: Colors.blue,
-                  ),
                 ],
               ),
             ],
@@ -274,12 +229,6 @@ class SearchPageState extends State<SearchPage> {
                     _isSearching = !_isSearching;
                     _searchResults = [];
                   });
-                  AppConstants.log.d(await FirebaseApi.addDataToDocument(
-                      "user",
-                      FirebaseAuth.instance.currentUser!.uid.toString(),
-                      UserModel(
-                          currLoc: _currentLocation.toString(),
-                          name: "Kashif Don")));
                 },
               ),
             ),
@@ -293,11 +242,26 @@ class SearchPageState extends State<SearchPage> {
                 ),
                 onPressed: () {
                   //  Get.to(() => const MyData());
-                  getDetails();
+                  AppConstants.log.f(DeviceInfo.deviceId);
                 },
               ),
             ),
-          if (isLocPer) DialogUtil.buildCircularProgressIndicator(),
+
+          Padding(
+            padding: EdgeInsets.only(
+                top: AppConstants.height * 0.1,
+                left: AppConstants.width * 0.25),
+            child: GestureDetector(
+              onTap: () {
+                AppConstants.log.d("Hello Dost0");
+                Get.dialog(RoomDialog());
+              },
+              child: ButtonWidget.elevatedBtn("Family Room"),
+            ),
+          ),
+
+          // Here is Circle Progress when the location gets load
+          if (isLocPer) WidgetUtil.buildCircularProgressIndicator(),
         ],
       ),
     );

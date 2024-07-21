@@ -118,7 +118,7 @@ class FirebaseApi {
         return false; // Indicate that the document already exists
       } else {
         // Document does not exist, add the data
-        await documentReference.set(data);
+        await documentReference.set(data.toJson());
         AppConstants.log.i(
             'Data added successfully to document $documentId in collection $collection.');
         return true; // Indicate that the data was added successfully
