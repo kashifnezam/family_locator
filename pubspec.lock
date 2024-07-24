@@ -238,6 +238,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  flutter_sticky_header:
+    dependency: "direct main"
+    description:
+      name: flutter_sticky_header
+      sha256: "017f398fbb45a589e01491861ca20eb6570a763fd9f3888165a978e11248c709"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.5"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -360,6 +368,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.12.4+1"
+  grouped_list:
+    dependency: "direct main"
+    description:
+      name: grouped_list
+      sha256: c52551bc17699e304634d4653b824a1aa7c6b1d3a2c1a0da1a80839f867353fb
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.0"
   http:
     dependency: "direct main"
     description:
@@ -377,7 +393,7 @@ packages:
     source: hosted
     version: "4.0.2"
   intl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: intl
       sha256: d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf
@@ -621,6 +637,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.4.2"
+  value_layout_builder:
+    dependency: transitive
+    description:
+      name: value_layout_builder
+      sha256: "98202ec1807e94ac72725b7f0d15027afde513c55c69ff3f41bcfccb950831bc"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.1"
   vector_math:
     dependency: transitive
     description:

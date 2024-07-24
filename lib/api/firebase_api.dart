@@ -24,6 +24,12 @@ class FirebaseApi {
     return groupMembers;
   }
 
+  static Future<void> updateLocation(String loc, String id) async {
+    _firestore.collection("anonymous").doc(id).update(
+      {'currLoc': loc},
+    );
+  }
+
   // Fetch a specific document by ID within a specific collection
   static Future<UserModel?> fetchDocumentById(String col, String userId) async {
     try {
@@ -100,7 +106,7 @@ class FirebaseApi {
   }
 
   //For anonymous user
-  static Future<bool> addDataIfNotExists(
+  static Future<bool> addAnonymousData(
       String collection, String documentId, AnonymousModel data) async {
     try {
       data.added = DateTime.now().toString();
@@ -108,10 +114,7 @@ class FirebaseApi {
       DocumentReference documentReference =
           _firestore.collection(collection).doc(documentId);
 
-      // Check if the document exists
-      DocumentSnapshot documentSnapshot = await documentReference.get();
-
-      if (documentSnapshot.exists) {
+      if (await isDocumentExists(collection, documentId)) {
         // Document already exists, do not overwrite
         AppConstants.log.e(
             'Document with ID $documentId already exists. Data will not be overwritten.');
@@ -126,6 +129,77 @@ class FirebaseApi {
     } catch (e) {
       AppConstants.log.e('Error adding data: $e');
       return false; // Indicate that there was an error
+    }
+  }
+
+  /// Check whether the document exists or not
+  static Future<bool> isDocumentExists(
+      String collection, String documentId) async {
+    DocumentReference documentReference =
+        _firestore.collection(collection).doc(documentId);
+
+    // Check if the document exists
+    DocumentSnapshot documentSnapshot = await documentReference.get();
+    return documentSnapshot.exists;
+  }
+
+  /// Room Number Add for the group
+  static Future<int> createRoom(
+      String deviceId, String roomId, String name) async {
+    if (await isDocumentExists("roomDetail", roomId)) {
+      AppConstants.log.e("Room with this id already Exists");
+      return 0;
+    }
+    try {
+      await FirebaseFirestore.instance
+          .collection('anonymous')
+          .doc(deviceId)
+          .update({
+        'roomId': FieldValue.arrayUnion([roomId]),
+        'name': name,
+      });
+      await FirebaseFirestore.instance
+          .collection('roomDetail')
+          .doc(roomId)
+          .set({
+        'members': FieldValue.arrayUnion([deviceId]),
+        'roomName': "$name's Room",
+        "owner": deviceId,
+        "created": DateTime.now().toString()
+      });
+      AppConstants.log.i('Room number added successfully');
+      return 1;
+    } catch (e) {
+      AppConstants.log.e('Error adding room number: $e');
+      return -1;
+    }
+  }
+
+  static Future<int> roomJoin(
+      String deviceId, String roomId, String name) async {
+    if (!await isDocumentExists("roomDetail", roomId)) {
+      AppConstants.log.e("Room with this id does not Exist");
+      return 0;
+    }
+    try {
+      await FirebaseFirestore.instance
+          .collection('anonymous')
+          .doc(deviceId)
+          .update({
+        'roomId': FieldValue.arrayUnion([roomId]),
+        'name': name,
+      });
+      await FirebaseFirestore.instance
+          .collection('roomDetail')
+          .doc(roomId)
+          .update({
+        'members': FieldValue.arrayUnion([deviceId]),
+      });
+      AppConstants.log.i('Room number added successfully');
+      return 1;
+    } catch (e) {
+      AppConstants.log.e('Error adding room number: $e');
+      return -1;
     }
   }
 }

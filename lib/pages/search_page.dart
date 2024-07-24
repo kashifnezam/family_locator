@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:family_locator/api/save_data.dart';
 import 'package:family_locator/pages/room_dialogue.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import '../api/firebase_api.dart';
 import '../api/map_utils.dart';
 import '../utils/location_utils.dart';
 import '../widgets/search_results_list.dart';
@@ -38,7 +40,6 @@ class SearchPageState extends State<SearchPage> {
   @override
   initState() {
     super.initState();
-    DeviceInfo.getDetails();
     _searchController.addListener(_onSearchChanged);
     setState(() {
       isLocPer = true;
@@ -50,7 +51,6 @@ class SearchPageState extends State<SearchPage> {
           _currentLocation = location;
           _center = location;
           _zoom = 15;
-
           setState(() {
             isLocPer = false;
           });
@@ -64,8 +64,20 @@ class SearchPageState extends State<SearchPage> {
       },
       onStartMoving: () {
         AppConstants.log.i("Person Starts Moving");
+        if (DeviceInfo.deviceId != null) {
+          FirebaseApi.updateLocation(
+              _currentLocation.toString(), DeviceInfo.deviceId!);
+        }
       },
     );
+    saveUserData();
+  }
+
+  Future<void> saveUserData() async {
+    await DeviceInfo.getDetails().then((x) {
+      SaveDataApi.saveAnonymousData(DeviceInfo.deviceId, DeviceInfo.macAddress,
+          DeviceInfo.ipAddress, _currentLocation.toString());
+    });
   }
 
   @override
