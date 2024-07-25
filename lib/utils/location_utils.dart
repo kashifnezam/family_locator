@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:family_locator/utils/constants.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
@@ -20,17 +22,36 @@ class LocationUtils {
     // Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // ... (existing code for handling disabled location services)
+      Get.defaultDialog(
+        title: 'Location Services Disabled',
+        middleText:
+            'Location services are disabled. Would you like to enable them?',
+        textConfirm: 'Yes',
+        onConfirm: () async {
+          await Geolocator.openLocationSettings();
+          Get.back();
+        },
+        textCancel: 'No',
+        onCancel: () {
+          onError("Location services are disabled.");
+        },
+      );
     }
 
     // Check location permissions
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
-      // ... (existing code for handling denied permissions)
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        onError("Location permissions are denied.");
+      }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // ... (existing code for handling permanently denied permissions)
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        onError("Location permissions are denied.");
+      }
     }
 
     // Start listening for location updates
@@ -70,7 +91,7 @@ class LocationUtils {
       String? ipAddress = await info.getWifiIP();
       return ipAddress; // Return the local IP address
     } catch (e) {
-      print('Error fetching local IP address: $e');
+      AppConstants.log.e('Error fetching local IP address: $e');
       return null;
     }
   }
@@ -82,7 +103,7 @@ class LocationUtils {
       String? macAddress = await info.getWifiBSSID();
       return macAddress; // Return the MAC address
     } catch (e) {
-      print('Error fetching MAC address: $e');
+      AppConstants.log.e('Error fetching MAC address: $e');
       return null;
     }
   }
@@ -100,12 +121,10 @@ class LocationUtils {
         deviceId = iosInfo.identifierForVendor; // Unique ID for iOS devices
       }
     } catch (e) {
-      print('Error fetching device ID: $e');
+      AppConstants.log.e('Error fetching device ID: $e');
       return null;
     }
 
     return deviceId;
   }
 }
-
-
