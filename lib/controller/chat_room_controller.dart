@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:family_locator/models/message_model.dart';
 import 'package:family_locator/utils/constants.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,6 +18,10 @@ class ChatRoomController extends GetxController {
   RxBool isMessageValid = false.obs;
   RxBool isLoading = true.obs;
   RxBool isMapExpanded = false.obs;
+  Rx<LatLng?> selectedLocation = Rx<LatLng?>(null);
+  RxDouble zoomLevel = 2.0.obs;
+  final mapController = MapController();
+  final RxBool isMapReady = false.obs;
 
   late StreamSubscription<QuerySnapshot> _messagesSubscription;
   late StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
@@ -47,6 +52,31 @@ class ChatRoomController extends GetxController {
     if (userLocations.isEmpty || userLocations.length < 2) return null;
     final points = userLocations.values.toList();
     return LatLngBounds.fromPoints(points);
+  }
+
+  //tp set the zoom level when click on marker or map
+  void selectLocation(LatLng? location) {
+    if (!isMapReady.value) return;
+    selectedLocation.value = location;
+    if (location != null) {
+      zoomLevel.value = 5.0;
+      mapController.move(location, 16.0);
+    } else {
+      zoomLevel.value = 2.0;
+      fitMapToBounds();
+    }
+  }
+
+  void fitMapToBounds() {
+    if (!isMapReady.value || userLocations.isEmpty) return;
+    final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
+    mapController.fitCamera(
+        CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)));
+  }
+
+  void onMapCreated() {
+    isMapReady.value = true;
+    fitMapToBounds();
   }
 
   void fetchMessages() {

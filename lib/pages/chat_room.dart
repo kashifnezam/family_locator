@@ -52,16 +52,20 @@ class ChatRoomState extends State<ChatRoom> {
                         borderRadius: BorderRadius.circular(8)),
                     height: 300, // Height of the expanded map
                     child: FlutterMap(
+                      mapController: controller.mapController,
                       options: MapOptions(
+                        onMapReady: controller.onMapCreated,
+                        initialZoom: controller.zoomLevel.value,
                         initialCameraFit: CameraFit.bounds(
-                            bounds: controller.userLocationBounds ??
-                                LatLngBounds(
-                                  const LatLng(6.4626999,
-                                      68.1097), // Southwest corner of India
-                                  const LatLng(35.6745457,
-                                      97.395561), // Northeast corner of India
-                                ),
-                            padding: const EdgeInsets.all(30)),
+                          bounds: controller.userLocationBounds ??
+                              LatLngBounds(
+                                const LatLng(6.4626999,
+                                    68.1097), // Southwest corner of India
+                                const LatLng(35.6745457,
+                                    97.395561), // Northeast corner of India
+                              ),
+                          padding: const EdgeInsets.all(30),
+                        ),
                       ),
                       children: [
                         TileLayer(
@@ -97,22 +101,28 @@ class ChatRoomState extends State<ChatRoom> {
                               point: location,
                               width: 40,
                               height: 40,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: userId == DeviceInfo.deviceId
-                                      ? Colors.blueGrey
-                                      : Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    firstLetter,
-                                    style: TextStyle(
-                                      color: userId == DeviceInfo.deviceId
-                                          ? Colors.white
-                                          : Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
+                              child: GestureDetector(
+                                onTap: () =>
+                                    controller.selectLocation(location),
+                                onDoubleTap: () =>
+                                    controller.selectLocation(null),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: userId == DeviceInfo.deviceId
+                                        ? Colors.blueGrey
+                                        : Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      firstLetter,
+                                      style: TextStyle(
+                                        color: userId == DeviceInfo.deviceId
+                                            ? Colors.white
+                                            : Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
                                 ),
