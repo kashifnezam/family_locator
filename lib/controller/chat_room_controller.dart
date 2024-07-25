@@ -68,7 +68,11 @@ class ChatRoomController extends GetxController {
   }
 
   void fitMapToBounds() {
-    if (!isMapReady.value || userLocations.isEmpty) return;
+    if (!isMapReady.value ||
+        userLocations.isEmpty ||
+        userLocations.length < 2) {
+      return;
+    }
     final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
     mapController.fitCamera(
         CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)));

@@ -85,6 +85,7 @@ class ChatRoomState extends State<ChatRoom> {
                           ],
                         ),
                         MarkerLayer(
+                          rotate: true,
                           markers:
                               controller.userLocations.entries.map((entry) {
                             final userId = entry.key;
