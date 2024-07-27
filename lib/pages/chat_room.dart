@@ -51,9 +51,12 @@ class ChatRoomState extends State<ChatRoom> {
                         border: Border.all(color: Colors.black45, width: 4),
                         borderRadius: BorderRadius.circular(8)),
                     height: 300, // Height of the expanded map
+
                     child: FlutterMap(
                       mapController: controller.mapController,
                       options: MapOptions(
+                        minZoom: 0.2,
+                        backgroundColor: Colors.blue.shade100,
                         onMapReady: controller.onMapCreated,
                         initialZoom: controller.zoomLevel.value,
                         initialCameraFit: CameraFit.bounds(
@@ -75,61 +78,105 @@ class ChatRoomState extends State<ChatRoom> {
                         PolylineLayer(
                           polylines: [
                             Polyline(
-                                points:
-                                    controller.userLocations.values.toList(),
-                                strokeWidth: 2.0,
-                                color: Colors.deepPurple.shade800,
-                                pattern: StrokePattern.dashed(
-                                  segments: const [5, 5],
-                                )),
+                              points: controller.userLocations.values.toList(),
+                              strokeWidth: 2.0,
+                              color: Colors.deepPurple.shade800,
+                              pattern: StrokePattern.dashed(
+                                segments: const [5, 5],
+                              ),
+                            ),
+                            Polyline(
+                              points: controller.routePoints,
+                              strokeWidth: 4.0,
+                              color: Colors.blue,
+                            ),
                           ],
                         ),
                         MarkerLayer(
                           rotate: true,
-                          markers:
-                              controller.userLocations.entries.map((entry) {
-                            final userId = entry.key;
-                            final location = entry.value;
-                            final userName =
-                                controller.userNames[userId] ?? 'Unknown';
-                            final firstLetter = userName.isNotEmpty
-                                ? userId == DeviceInfo.deviceId
-                                    ? "You"
-                                    : userName[0].toUpperCase()
-                                : '?';
-
-                            return Marker(
-                              point: location,
-                              width: 40,
-                              height: 40,
-                              child: GestureDetector(
-                                onTap: () =>
-                                    controller.selectLocation(location),
-                                onDoubleTap: () =>
-                                    controller.selectLocation(null),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: userId == DeviceInfo.deviceId
-                                        ? Colors.blueGrey
-                                        : Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      firstLetter,
-                                      style: TextStyle(
+                          markers: [
+                            ...controller.userLocations.entries.map((entry) {
+                              final userId = entry.key;
+                              final location = entry.value;
+                              final userName =
+                                  controller.userNames[userId] ?? 'Unknown';
+                              final firstLetter = userName.isNotEmpty
+                                  ? userId == DeviceInfo.deviceId
+                                      ? "You"
+                                      : userName[0].toUpperCase()
+                                  : '?';
+                              return Marker(
+                                point: location,
+                                width: 40,
+                                height: 40,
+                                child: GestureDetector(
+                                  onTap: () =>
+                                      controller.fetchRouteToMarker(location),
+                                  onDoubleTap: () =>
+                                      controller.selectLocation(null),
+                                  child: Tooltip(
+                                    message: userName,
+                                    child: Container(
+                                      decoration: BoxDecoration(
                                         color: userId == DeviceInfo.deviceId
-                                            ? Colors.white
-                                            : Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
+                                            ? Colors.blueGrey
+                                            : Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          firstLetter,
+                                          style: TextStyle(
+                                            color: userId == DeviceInfo.deviceId
+                                                ? Colors.white
+                                                : Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
+                              );
+                            }),
+                            // Add distance markers
+                            for (int i = 0;
+                                i < controller.userLocations.values.length - 1;
+                                i++)
+                              Marker(
+                                point: controller.calculateMidpoint(
+                                  controller.userLocations.values.elementAt(i),
+                                  controller.userLocations.values
+                                      .elementAt(i + 1),
+                                ),
+                                width: 80,
+                                height: 20,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(4),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${controller.calculateDistance(
+                                            controller.userLocations.values
+                                                .elementAt(i),
+                                            controller.userLocations.values
+                                                .elementAt(i + 1),
+                                          ).toStringAsFixed(2)} km',
+                                      style: const TextStyle(fontSize: 10),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            );
-                          }).toList(),
+                          ],
                         ),
                       ],
                     ),
@@ -141,69 +188,78 @@ class ChatRoomState extends State<ChatRoom> {
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value) {
-                    return WidgetUtil.buildCircularProgressIndicator();
+                    return const Center(child: CircularProgressIndicator());
                   }
                   if (controller.messages.isEmpty) {
                     return const Center(child: Text('No messages yet'));
                   }
 
-                  // Group messages by date
                   final groupedMessages =
                       groupMessagesByDate(controller.messages);
-
                   return CustomScrollView(
-                    slivers: groupedMessages.entries
-                        .map((entry) {
-                          final date = entry.key;
-                          final messagesForDate = entry.value.reversed.toList();
+                    controller: controller.scrollController,
+                    slivers: [
+                      if (controller.isLoading.value)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        ),
+                      ...groupedMessages.entries
+                          .map((entry) {
+                            final date = entry.key;
+                            final messagesForDate = entry.value;
 
-                          return SliverStickyHeader(
-                            header: Container(
-                              height: 40,
-                              color: Colors.transparent,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              alignment: Alignment.center,
-                              child: Container(
+                            return SliverStickyHeader(
+                              header: Container(
+                                height: 40,
+                                color: Colors.transparent,
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  _formatDateHeader(date),
-                                  style: const TextStyle(
-                                    color: Colors.black87,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
+                                    horizontal: 16, vertical: 8),
+                                alignment: Alignment.center,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _formatDateHeader(date),
+                                    style: const TextStyle(
+                                        color: Colors.black87,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),
-                            ),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final message = messagesForDate[index];
-                                  final senderName =
-                                      controller.userNames[message.sender] ??
-                                          'Unknown';
-                                  final isMe =
-                                      message.sender == DeviceInfo.deviceId;
-                                  final formattedTime = DateFormat('HH:mm')
-                                      .format(message.timestamp.toDate());
-
-                                  return _buildMessageBubble(context, isMe,
-                                      senderName, message.text, formattedTime);
-                                },
-                                childCount: messagesForDate.length,
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final message = messagesForDate[index];
+                                    final senderName =
+                                        controller.userNames[message.sender] ??
+                                            'Unknown';
+                                    final isMe =
+                                        message.sender == controller.userId;
+                                    final formattedTime = DateFormat('HH:mm')
+                                        .format(message.timestamp.toDate());
+                                    return _buildMessageBubble(
+                                        context,
+                                        isMe,
+                                        senderName,
+                                        message.text,
+                                        formattedTime);
+                                  },
+                                  childCount: messagesForDate.length,
+                                ),
                               ),
-                            ),
-                          );
-                        })
-                        .toList()
-                        .reversed
-                        .toList(),
+                            );
+                          })
+                          .toList()
+                          .reversed
+                    ],
                   );
                 }),
               ),

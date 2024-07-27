@@ -57,7 +57,7 @@ class SearchPageState extends State<SearchPage> {
         });
       },
       onError: (error) {
-        print("Error getting location: $error");
+        AppConstants.log.e("Error getting location: $error");
         setState(() {
           isLocPer = false;
         });
@@ -115,7 +115,7 @@ class SearchPageState extends State<SearchPage> {
         _isSearchLoading = false;
       });
     } catch (e) {
-      print("Error searching locations: $e");
+      AppConstants.log.e("Error searching locations: $e");
       setState(() => _isSearchLoading = false);
       Get.defaultDialog(
         title: "Failed to search locations",
@@ -225,7 +225,7 @@ class SearchPageState extends State<SearchPage> {
                 _mapController.move(newCenter, _zoom);
               },
             ),
-          if (!_isSearching && _hideTools)
+          if (!_isSearching)
             Container(
               margin: const EdgeInsets.only(top: 35, left: 10),
               child: IconButton(
@@ -244,33 +244,18 @@ class SearchPageState extends State<SearchPage> {
                 },
               ),
             ),
-          if (_hideTools)
-            Container(
-              margin: EdgeInsets.only(top: 35, left: Get.width - 100),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.chat,
-                  size: 30,
-                ),
-                onPressed: () {
-                  //  Get.to(() => const MyData());
-                  AppConstants.log.f(DeviceInfo.deviceId);
+          if (!_isSearching)
+            Padding(
+              padding: EdgeInsets.only(
+                  top: AppConstants.height * 0.1,
+                  left: AppConstants.width * 0.25),
+              child: GestureDetector(
+                onTap: () {
+                  Get.dialog(RoomDialog());
                 },
+                child: ButtonWidget.elevatedBtn("Family Room"),
               ),
             ),
-
-          Padding(
-            padding: EdgeInsets.only(
-                top: AppConstants.height * 0.1,
-                left: AppConstants.width * 0.25),
-            child: GestureDetector(
-              onTap: () {
-                AppConstants.log.d("Hello Dost0");
-                Get.dialog(RoomDialog());
-              },
-              child: ButtonWidget.elevatedBtn("Family Room"),
-            ),
-          ),
 
           // Here is Circle Progress when the location gets load
           if (isLocPer) WidgetUtil.buildCircularProgressIndicator(),
