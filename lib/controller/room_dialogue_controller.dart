@@ -1,4 +1,5 @@
 import 'package:family_locator/api/firebase_api.dart';
+import 'package:family_locator/controller/chat_room_controller.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -86,6 +87,10 @@ class RoomDialogController extends GetxController {
             'Name: ${nameController.text}, Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
+          ChatRoomController controller = ChatRoomController(
+              roomId: roomController.text,
+              userId: DeviceInfo.deviceId.toString());
+          controller.userJoinLeft(nameController.text, "joined");
           Get.to(() => ChatRoom(
               roomId: roomController.text,
               userId: DeviceInfo.deviceId.toString()));

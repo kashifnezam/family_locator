@@ -1,5 +1,4 @@
 import 'package:family_locator/utils/device_info.dart';
-import 'package:family_locator/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -79,10 +78,10 @@ class ChatRoomState extends State<ChatRoom> {
                           polylines: [
                             Polyline(
                               points: controller.userLocations.values.toList(),
-                              strokeWidth: 2.0,
-                              color: Colors.deepPurple.shade800,
+                              strokeWidth: 1.0,
+                              color: Colors.grey,
                               pattern: StrokePattern.dashed(
-                                segments: const [5, 5],
+                                segments: const [1, 5],
                               ),
                             ),
                             Polyline(
@@ -111,7 +110,7 @@ class ChatRoomState extends State<ChatRoom> {
                                 height: 40,
                                 child: GestureDetector(
                                   onTap: () =>
-                                      controller.fetchRouteToMarker(location),
+                                      controller.selectLocation(location),
                                   onDoubleTap: () =>
                                       controller.selectLocation(null),
                                   child: Tooltip(
@@ -141,41 +140,6 @@ class ChatRoomState extends State<ChatRoom> {
                               );
                             }),
                             // Add distance markers
-                            for (int i = 0;
-                                i < controller.userLocations.values.length - 1;
-                                i++)
-                              Marker(
-                                point: controller.calculateMidpoint(
-                                  controller.userLocations.values.elementAt(i),
-                                  controller.userLocations.values
-                                      .elementAt(i + 1),
-                                ),
-                                width: 80,
-                                height: 20,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(4),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Colors.black26,
-                                        blurRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      '${controller.calculateDistance(
-                                            controller.userLocations.values
-                                                .elementAt(i),
-                                            controller.userLocations.values
-                                                .elementAt(i + 1),
-                                          ).toStringAsFixed(2)} km',
-                                      style: const TextStyle(fontSize: 10),
-                                    ),
-                                  ),
-                                ),
-                              ),
                           ],
                         ),
                       ],
@@ -187,7 +151,8 @@ class ChatRoomState extends State<ChatRoom> {
               }),
               Expanded(
                 child: Obx(() {
-                  if (controller.isLoading.value) {
+                  if (controller.isLoading.value &&
+                      controller.messages.isEmpty) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (controller.messages.isEmpty) {
@@ -222,7 +187,7 @@ class ChatRoomState extends State<ChatRoom> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[300],
+                                    color: Colors.grey[500],
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -237,7 +202,8 @@ class ChatRoomState extends State<ChatRoom> {
                               sliver: SliverList(
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {
-                                    final message = messagesForDate[index];
+                                    final message = messagesForDate[
+                                        messagesForDate.length - index - 1];
                                     final senderName =
                                         controller.userNames[message.sender] ??
                                             'Unknown';
@@ -245,12 +211,19 @@ class ChatRoomState extends State<ChatRoom> {
                                         message.sender == controller.userId;
                                     final formattedTime = DateFormat('HH:mm')
                                         .format(message.timestamp.toDate());
-                                    return _buildMessageBubble(
-                                        context,
-                                        isMe,
-                                        senderName,
-                                        message.text,
-                                        formattedTime);
+
+                                    // Check if the message is a system message
+                                    if (message.sender == "System") {
+                                      return _buildSystemMessageBubble(
+                                          context, message.text);
+                                    } else {
+                                      return _buildMessageBubble(
+                                          context,
+                                          isMe,
+                                          senderName,
+                                          message.text,
+                                          formattedTime);
+                                    }
                                   },
                                   childCount: messagesForDate.length,
                                 ),
@@ -305,6 +278,18 @@ class ChatRoomState extends State<ChatRoom> {
               child: Obx(() => Icon(
                   controller.isMapExpanded.value ? Icons.close : Icons.map)),
             ),
+          ),
+          Positioned(
+            bottom: 75,
+            right: 16,
+            child: Obx(() {
+              return controller.isAtBottom.value
+                  ? const SizedBox.shrink() // Hide the button if at the bottom
+                  : FloatingActionButton(
+                      onPressed: controller.scrollToBottom,
+                      child: const Icon(Icons.arrow_downward),
+                    );
+            }),
           ),
         ],
       ),
@@ -384,6 +369,25 @@ class ChatRoomState extends State<ChatRoom> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSystemMessageBubble(BuildContext context, String text) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+              color: Colors.black54, fontStyle: FontStyle.italic),
         ),
       ),
     );

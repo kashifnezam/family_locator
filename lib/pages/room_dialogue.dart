@@ -12,95 +12,99 @@ class RoomDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Obx(
-                () => Text(
-                  controller.isCreatingRoom.value ? 'Create Room' : 'Join Room',
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Get.back(),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Obx(
-                    () => ElevatedButton(
-                      onPressed: () => controller.isCreatingRoom.value
-                          ? null
-                          : controller.toggleMode(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: controller.isCreatingRoom.value
-                            ? Colors.blue
-                            : Colors.white,
-                      ),
-                      child: Text(
-                        'Create Room',
-                        style: TextStyle(
-                            color: controller.isCreatingRoom.value
-                                ? Colors.black
-                                : Colors.grey),
-                      ),
-                    ),
+        SingleChildScrollView(
+          child: AlertDialog(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Obx(
+                  () => Text(
+                    controller.isCreatingRoom.value
+                        ? 'Create Room'
+                        : 'Join Room',
                   ),
-                  Obx(() => ElevatedButton(
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Get.back(),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Obx(
+                      () => ElevatedButton(
                         onPressed: () => controller.isCreatingRoom.value
-                            ? controller.toggleMode()
-                            : null,
+                            ? null
+                            : controller.toggleMode(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: !controller.isCreatingRoom.value
+                          backgroundColor: controller.isCreatingRoom.value
                               ? Colors.blue
                               : Colors.white,
                         ),
                         child: Text(
-                          'Join Room',
+                          'Create Room',
                           style: TextStyle(
-                              color: !controller.isCreatingRoom.value
+                              color: controller.isCreatingRoom.value
                                   ? Colors.black
                                   : Colors.grey),
                         ),
-                      )),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                maxLines: 1,
-                controller: controller.nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Your Name',
-                  border: OutlineInputBorder(),
+                      ),
+                    ),
+                    Obx(() => ElevatedButton(
+                          onPressed: () => controller.isCreatingRoom.value
+                              ? controller.toggleMode()
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: !controller.isCreatingRoom.value
+                                ? Colors.blue
+                                : Colors.white,
+                          ),
+                          child: Text(
+                            'Join Room',
+                            style: TextStyle(
+                                color: !controller.isCreatingRoom.value
+                                    ? Colors.black
+                                    : Colors.grey),
+                          ),
+                        )),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                maxLines: 1,
-                keyboardType: TextInputType.number,
-                controller: controller.roomController,
-                decoration: const InputDecoration(
-                  labelText: 'Room Number',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16),
+                TextField(
+                  maxLines: 1,
+                  controller: controller.nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Your Name',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
+                const SizedBox(height: 16),
+                TextField(
+                  maxLines: 1,
+                  keyboardType: TextInputType.number,
+                  controller: controller.roomController,
+                  decoration: const InputDecoration(
+                    labelText: 'Room Number',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  controller.submitForm(); // Call the method correctly
+                },
+                child: Obx(() =>
+                    Text(controller.isCreatingRoom.value ? 'Create' : 'Join')),
               ),
             ],
           ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                controller.submitForm(); // Call the method correctly
-              },
-              child: Obx(() =>
-                  Text(controller.isCreatingRoom.value ? 'Create' : 'Join')),
-            ),
-          ],
         ),
         // Progress Indicator
         Obx(() {

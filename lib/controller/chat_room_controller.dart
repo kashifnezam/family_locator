@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:family_locator/models/message_model.dart';
 import 'package:family_locator/utils/constants.dart';
+import 'package:family_locator/utils/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -13,6 +14,7 @@ class ChatRoomController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String roomId;
   final String userId;
+  Timer? _debounceTimer; // Timer for debounce
 
   RxList<MessageModel> messages = <MessageModel>[].obs;
   RxMap<String, String> userNames = <String, String>{}.obs;
@@ -23,12 +25,14 @@ class ChatRoomController extends GetxController {
   Rx<LatLng?> selectedLocation = Rx<LatLng?>(null);
   RxDouble zoomLevel = 2.0.obs;
   DocumentSnapshot? _lastDocument;
+  RxList<LatLng> routePoints = <LatLng>[].obs;
 
   bool _hasMoreMessages = true;
   final mapController = MapController();
   final RxBool isMapReady = false.obs;
-  static const int messagesPerPage = 20;
+  static const int messagesPerPage = 75;
   final ScrollController scrollController = ScrollController();
+  RxBool isAtBottom = true.obs; // Reactive variable to track scroll position
 
   late StreamSubscription<QuerySnapshot> messagesSubscription;
   late StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
@@ -42,18 +46,26 @@ class ChatRoomController extends GetxController {
     fetchMessages(initial: true).then((_) => scrollToBottom());
     fetchLocations();
     scrollController.addListener(_scrollListener);
+    listenToMessages(); // Start listening to messages
   }
 
   @override
   void onClose() {
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
+    userJoinLeft(userNames[userId] ?? "unknown", "left");
     super.onClose();
   }
 
   void _scrollListener() {
-    if (scrollController.offset < 5) {
+    if (scrollController.offset < 0.5) {
       loadMoreMessages(); // Load more messages when scrolled to the top
+    }
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent) {
+      isAtBottom.value = true;
+    } else {
+      isAtBottom.value = false;
     }
   }
 
@@ -147,7 +159,7 @@ class ChatRoomController extends GetxController {
       _lastDocument = snapshot.docs.last;
       _hasMoreMessages = snapshot.docs.length == messagesPerPage;
 
-      fetchUserNames(newMessages);
+      await fetchUserNames(newMessages);
       isLoading.value = false;
     } catch (error) {
       AppConstants.log.e('Error fetching messages: $error');
@@ -237,7 +249,7 @@ class ChatRoomController extends GetxController {
       text: text,
       timestamp: Timestamp.now(),
     );
-
+    scrollToBottom();
     // Add the message to the local list immediately
     messages.insert(0, message); // Insert at the top for immediate visibility
 
@@ -254,6 +266,13 @@ class ChatRoomController extends GetxController {
     }
   }
 
+  //Load more messages on scroll
+  void loadMoreMessages() {
+    if (!isLoading.value && _hasMoreMessages) {
+      fetchMessages();
+    }
+  }
+
   void scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
@@ -266,67 +285,120 @@ class ChatRoomController extends GetxController {
     });
   }
 
-  //Load more messages on scroll
-  void loadMoreMessages() {
-    if (!isLoading.value && _hasMoreMessages) {
-      fetchMessages();
-    }
-  }
-
-  List<LatLng> getPathBetweenMarkers() {
-    return userLocations.values.toList();
-  }
-
   Future<List<LatLng>> fetchRoute(LatLng start, List<LatLng> waypoints) async {
     final waypointsString = waypoints
         .map((point) => '${point.longitude},${point.latitude}')
         .join(';');
     final url =
         'https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};$waypointsString?overview=full';
-
+    print(url);
     final response = await http.get(Uri.parse(url));
+    print(response);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final route = data['routes'][0]['geometry']['coordinates'] as List;
-      return route
-          .map((coord) => LatLng(coord[1], coord[0]))
-          .toList(); // Convert to LatLng
+
+      // Check if routes are available
+      if (data['routes'].isNotEmpty) {
+        final geometry = data['routes'][0]
+            ['geometry']; // This is the encoded polyline string
+        return decodePolyline(geometry); // Decode the polyline to LatLng points
+      } else {
+        throw Exception('No routes found');
+      }
     } else {
-      throw Exception('Failed to load route');
+      throw Exception('Failed to load route: ${response.body}');
     }
   }
 
-  void onMarkerTap(LatLng selectedLocation) async {
-    AppConstants.log.e("mai to heel gya");
-    try {
-      final route =
-          await fetchRoute(selectedLocation, userLocations.values.toList());
-      // Update your polyline layer with the new route
-      updatePolyline(route);
-    } catch (e) {
-      print('Error fetching route: $e');
+  List<LatLng> decodePolyline(String encoded) {
+    List<LatLng> polyline = [];
+    int index = 0, len = encoded.length;
+    int lat = 0, lng = 0;
+
+    while (index < len) {
+      int b;
+      int shift = 0;
+      int result = 0;
+
+      // Decode latitude
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result >> 1) ^ -(result & 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+
+      // Decode longitude
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result >> 1) ^ -(result & 1));
+      lng += dlng;
+
+      LatLng point = LatLng((lat / 1E5), (lng / 1E5));
+      polyline.add(point);
+    }
+
+    return polyline;
+  }
+
+  void updatePolyline() {
+    final myLoc = userLocations[DeviceInfo.deviceId];
+    if (myLoc != null) {
+      final waypoints =
+          userLocations.values.where((loc) => loc != myLoc).toList();
+      if (waypoints.length > 1) {
+        // Cancel any existing timer
+        _debounceTimer?.cancel();
+
+        // Start a new timer for 3 seconds
+        _debounceTimer = Timer(const Duration(seconds: 3), () {
+          fetchRoute(myLoc, waypoints).then((route) {
+            routePoints.value = route;
+          });
+        });
+      }
     }
   }
 
-  RxList<LatLng> routePoints = <LatLng>[].obs;
-
-  void updatePolyline(List<LatLng> newRoute) {
-    routePoints.value = newRoute;
+  void listenToMessages() {
+    _firestore
+        .collection('chatrooms')
+        .doc(roomId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .listen((snapshot) {
+      // Clear messages and add new ones
+      messages.clear();
+      for (var doc in snapshot.docs) {
+        messages.add(MessageModel.fromMap(doc.data() as Map<String, dynamic>));
+      }
+      // Scroll to bottom only if the user is at the bottom
+      if (isAtBottom.value) {
+        scrollToBottom();
+      }
+    });
   }
 
-  Future<void> fetchRouteToMarker(LatLng selectedLocation) async {
-    try {
-      // Get the list of waypoints (other markers)
-      List<LatLng> waypoints =
-          userLocations.values.where((loc) => loc != selectedLocation).toList();
+  Future<void> userJoinLeft(String newUserName, String status) async {
+    final message = MessageModel(
+      sender: 'System', // System message to indicate a user joined
+      text: '$newUserName $status the room',
+      timestamp: Timestamp.now(),
+    );
 
-      // Call the method to get the route
-      List<LatLng> route = await fetchRoute(selectedLocation, waypoints);
-
-      // Update the route points to display on the map
-      updatePolyline(route);
-    } catch (e) {
-      print('Error fetching route: $e');
-    }
+    // Send the message to Firestore
+    await _firestore
+        .collection('chatrooms')
+        .doc(roomId)
+        .collection('messages')
+        .add(message.toMap());
   }
 }
