@@ -1,7 +1,6 @@
 class AnonymousModel {
   AnonymousModel({
     required this.currLoc,
-    this.name,
     this.id,
     this.macAd,
     this.ipAddress,
@@ -10,7 +9,6 @@ class AnonymousModel {
   });
 
   final String currLoc;
-  String? name;
   String? id;
   String? macAd;
   String? ipAddress;
@@ -20,7 +18,6 @@ class AnonymousModel {
   factory AnonymousModel.fromJson(Map<String, dynamic> json) {
     return AnonymousModel(
       currLoc: json['currLoc'] ?? '',
-      name: json['name'] ?? '',
       id: json['id'] ?? '',
       macAd: json['macAd'] ?? '',
       added: json['added'] ?? '',
@@ -33,7 +30,6 @@ class AnonymousModel {
   Map<String, dynamic> toJson() {
     return {
       'currLoc': currLoc,
-      'name': name,
       'id': id,
       'macAd': macAd,
       'added': added,
@@ -45,6 +41,6 @@ class AnonymousModel {
   // Override toString() method for better representation
   @override
   String toString() {
-    return 'AnonymousModel(currLoc: $currLoc, id: $id, macAd: $macAd, added: $added, name: $name , ipAddress: $ipAddress, groupId: $groupId)';
+    return 'AnonymousModel(currLoc: $currLoc, id: $id, macAd: $macAd, added: $added, , ipAddress: $ipAddress, groupId: $groupId)';
   }
 }

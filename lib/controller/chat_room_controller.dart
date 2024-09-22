@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/models/message_model.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
@@ -22,6 +23,7 @@ class ChatRoomController extends GetxController {
   RxBool isMessageValid = false.obs;
   RxBool isLoading = true.obs;
   RxBool isMapExpanded = false.obs;
+  RxBool isLargerMap = false.obs;
   Rx<LatLng?> selectedLocation = Rx<LatLng?>(null);
   RxDouble zoomLevel = 2.0.obs;
   DocumentSnapshot? _lastDocument;
@@ -53,7 +55,7 @@ class ChatRoomController extends GetxController {
   void onClose() {
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
-    userJoinLeft(userNames[userId] ?? "unknown", "left");
+    FirebaseApi.userJoinLeft("left", roomId);
     super.onClose();
   }
 
@@ -71,6 +73,9 @@ class ChatRoomController extends GetxController {
 
   void toggleMapExpansion() {
     isMapExpanded.toggle();
+  }
+  void toggleLargeMap() {
+    isLargerMap.toggle();
   }
 
   // to get the bounds of all users location
@@ -159,7 +164,7 @@ class ChatRoomController extends GetxController {
       _lastDocument = snapshot.docs.last;
       _hasMoreMessages = snapshot.docs.length == messagesPerPage;
 
-      await fetchUserNames(newMessages);
+      await fetchUserNames(roomId);
       isLoading.value = false;
     } catch (error) {
       AppConstants.log.e('Error fetching messages: $error');
@@ -167,21 +172,35 @@ class ChatRoomController extends GetxController {
     }
   }
 
-  Future<void> fetchUserNames(List<MessageModel> newMessages) async {
-    Set<String> uniqueUserIds = newMessages.map((m) => m.sender).toSet()
-      ..removeWhere((id) => userNames.containsKey(id));
-
-    if (uniqueUserIds.isEmpty) return;
-
+  Future<void> fetchUserNames(String roomId) async {
     try {
+      // Fetch the room details document
+      var roomDoc = await _firestore.collection('roomDetail').doc(roomId).get();
+
+      if (!roomDoc.exists) {
+        AppConstants.log.e('Room not found');
+        return;
+      }
+
+      // Extract the members list from the room document
+      List<dynamic> members = roomDoc.get('members') ?? [];
+
+      if (members.isEmpty) {
+        AppConstants.log.i('No members found in room.');
+        return;
+      }
+
+      // Fetch details of each user in the members list
       var userDocs = await _firestore
           .collection('anonymous')
-          .where(FieldPath.documentId, whereIn: uniqueUserIds.toList())
+          .where(FieldPath.documentId, whereIn: members)
           .get();
 
       for (var doc in userDocs.docs) {
-        userNames[doc.id] = doc.get('name') ?? 'Unknown';
+        AppConstants.log.i(doc.get('usr'));
+        userNames[doc.id] = doc.get('usr') ?? 'Unknown';
       }
+      AppConstants.log.i(userNames);
     } catch (e) {
       AppConstants.log.e('Error fetching user names: $e');
     }
@@ -291,9 +310,7 @@ class ChatRoomController extends GetxController {
         .join(';');
     final url =
         'https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};$waypointsString?overview=full';
-    print(url);
     final response = await http.get(Uri.parse(url));
-    print(response);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
 
@@ -378,27 +395,12 @@ class ChatRoomController extends GetxController {
       // Clear messages and add new ones
       messages.clear();
       for (var doc in snapshot.docs) {
-        messages.add(MessageModel.fromMap(doc.data() as Map<String, dynamic>));
+        messages.add(MessageModel.fromMap(doc.data()));
       }
       // Scroll to bottom only if the user is at the bottom
       if (isAtBottom.value) {
         scrollToBottom();
       }
     });
-  }
-
-  Future<void> userJoinLeft(String newUserName, String status) async {
-    final message = MessageModel(
-      sender: 'System', // System message to indicate a user joined
-      text: '$newUserName $status the room',
-      timestamp: Timestamp.now(),
-    );
-
-    // Send the message to Firestore
-    await _firestore
-        .collection('chatrooms')
-        .doc(roomId)
-        .collection('messages')
-        .add(message.toMap());
   }
 }

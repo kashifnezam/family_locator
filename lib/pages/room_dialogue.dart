@@ -1,3 +1,4 @@
+import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,9 +11,10 @@ class RoomDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        SingleChildScrollView(
+    return Center(
+      child: SingleChildScrollView(
+        child: SizedBox(
+          width: AppConstants.width,
           child: AlertDialog(
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -77,15 +79,6 @@ class RoomDialog extends StatelessWidget {
                 const SizedBox(height: 16),
                 TextField(
                   maxLines: 1,
-                  controller: controller.nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Your Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  maxLines: 1,
                   keyboardType: TextInputType.number,
                   controller: controller.roomController,
                   decoration: const InputDecoration(
@@ -96,25 +89,22 @@ class RoomDialog extends StatelessWidget {
               ],
             ),
             actions: [
-              ElevatedButton(
-                onPressed: () {
-                  controller.submitForm(); // Call the method correctly
-                },
-                child: Obx(() =>
-                    Text(controller.isCreatingRoom.value ? 'Create' : 'Join')),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    controller.submitForm();
+                  },
+                  child: Obx(() => controller.isLoading.value
+                      ? WidgetUtil.buildCircularProgressIndicator()
+                      : Text(
+                          controller.isCreatingRoom.value ? 'Create' : 'Join')),
+                ),
               ),
             ],
           ),
         ),
-        // Progress Indicator
-        Obx(() {
-          if (controller.isLoading.value) {
-            return WidgetUtil.buildCircularProgressIndicator();
-          }
-          return const SizedBox
-              .shrink(); // Return an empty widget when not loading
-        }),
-      ],
+      ),
     );
   }
 }

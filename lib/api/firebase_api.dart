@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_locator/models/anonymous_model.dart';
 import 'package:family_locator/models/user_model.dart';
+import 'package:family_locator/utils/device_info.dart';
+import 'package:family_locator/utils/location_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/message_model.dart';
 import '../utils/constants.dart';
+import '../utils/offline_data.dart';
 
 class FirebaseApi {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -114,18 +118,18 @@ class FirebaseApi {
       DocumentReference documentReference =
           _firestore.collection(collection).doc(documentId);
 
-      if (await isDocumentExists(collection, documentId)) {
-        // Document already exists, do not overwrite
-        AppConstants.log.e(
-            'Document with ID $documentId already exists. Data will not be overwritten.');
-        return false; // Indicate that the document already exists
-      } else {
-        // Document does not exist, add the data
-        await documentReference.set(data.toJson());
-        AppConstants.log.i(
-            'Data added successfully to document $documentId in collection $collection.');
-        return true; // Indicate that the data was added successfully
-      }
+      // if (await isDocumentExists(collection, documentId)) {
+      //   // Document already exists, do not overwrite
+      //   AppConstants.log.e(
+      //       'Document with ID $documentId already exists. Data will not be overwritten.');
+      //   return false; // Indicate that the document already exists
+      // } else {
+      // Document does not exist, add the data
+      // }
+      await documentReference.update(data.toJson());
+      AppConstants.log.i(
+          'Data added successfully to document $documentId in collection $collection.');
+      return true; // Indicate that the data was added successfully
     } catch (e) {
       AppConstants.log.e('Error adding data: $e');
       return false; // Indicate that there was an error
@@ -175,8 +179,7 @@ class FirebaseApi {
     }
   }
 
-  static Future<int> roomJoin(
-      String deviceId, String roomId, String name) async {
+  static Future<int> roomJoin(String deviceId, String roomId) async {
     if (!await isDocumentExists("roomDetail", roomId)) {
       AppConstants.log.e("Room with this id does not Exist");
       return 0;
@@ -187,7 +190,6 @@ class FirebaseApi {
           .doc(deviceId)
           .update({
         'roomId': FieldValue.arrayUnion([roomId]),
-        'name': name,
       });
       await FirebaseFirestore.instance
           .collection('roomDetail')
@@ -200,6 +202,60 @@ class FirebaseApi {
     } catch (e) {
       AppConstants.log.e('Error adding room number: $e');
       return -1;
+    }
+  }
+
+  static Future<void> userJoinLeft(String status, String roomId) async {
+    final message = MessageModel(
+      sender: 'System', // System message to indicate a user joined
+      text: '${await OfflineData.getData("usr")} $status the room',
+      timestamp: Timestamp.now(),
+    );
+
+    // Send the message to Firestore
+    await _firestore
+        .collection('chatrooms')
+        .doc(roomId)
+        .collection('messages')
+        .add(message.toMap());
+    LocationUtils.getCurrentLocation(
+      onLocationLoaded: (location) async {
+        await updateLocation(location.toString(), DeviceInfo.deviceId!);
+      },
+    );
+  }
+
+  /// Checks if the given username is already used in the 'anonymous' collection.
+  static Future<bool> checkUsernameExists(String username) async {
+    try {
+      // Query the 'anonymous' collection to check if the username exists
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('anonymous')
+          .where('usr', isEqualTo: username)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        // Check if DeviceInfo.deviceId is available
+        String? deviceId = DeviceInfo.deviceId;
+        if (deviceId == null) {
+          AppConstants.log.e('Device ID is not available.');
+          return false; // Fail gracefully if deviceId is null
+        }
+
+        // If no such username, update the 'usr' field with the new username
+        await FirebaseFirestore.instance
+            .collection('anonymous')
+            .doc(deviceId)
+            .update({
+          'usr': username,
+        });
+      }
+
+      // Return true if username does not exist, false otherwise
+      return querySnapshot.docs.isEmpty;
+    } catch (e) {
+      AppConstants.log.e('Error checking username availability: $e');
+      return false; // Indicate failure
     }
   }
 }

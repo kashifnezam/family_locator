@@ -1,9 +1,9 @@
 import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/controller/chat_room_controller.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../pages/chat_room.dart';
+import '../utils/offline_data.dart';
 
 class RoomDialogController extends GetxController {
   final nameController = TextEditingController();
@@ -18,14 +18,6 @@ class RoomDialogController extends GetxController {
   }
 
   Future<void> submitForm() async {
-    if (nameController.text.isEmpty) {
-      Get.snackbar(
-        backgroundColor: Colors.red.shade100,
-        'Error',
-        'Please enter your name',
-      );
-      return;
-    }
     if (roomController.text.isEmpty) {
       Get.snackbar(
         backgroundColor: Colors.red.shade100,
@@ -53,12 +45,14 @@ class RoomDialogController extends GetxController {
             DeviceInfo.deviceId!, roomController.text, nameController.text);
 
         if (response == 1) {
+          Get.back();
           Get.snackbar(
             backgroundColor: Colors.green,
             'Created Room',
-            'Name: ${nameController.text}, Room: ${roomController.text}',
+            'Name: ${OfflineData.getData("usr")}, Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
+
           Get.to(() => ChatRoom(
               roomId: roomController.text,
               userId: DeviceInfo.deviceId.toString()));
@@ -66,7 +60,7 @@ class RoomDialogController extends GetxController {
           Get.snackbar(
             backgroundColor: Colors.red,
             'Room Already Exists',
-            'Try changing Room No or Join with Room: ${roomController.text}',
+            'Try changing Room no. or Join with Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
         } else {
@@ -79,18 +73,17 @@ class RoomDialogController extends GetxController {
         }
       } else {
         final response = await FirebaseApi.roomJoin(
-            DeviceInfo.deviceId!, roomController.text, nameController.text);
+            DeviceInfo.deviceId!, roomController.text);
         if (response == 1) {
+          Get.back();
           Get.snackbar(
             backgroundColor: Colors.green,
             'Joined Room',
-            'Name: ${nameController.text}, Room: ${roomController.text}',
+            'Name: ${await OfflineData.getData("usr")}, Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
-          ChatRoomController controller = ChatRoomController(
-              roomId: roomController.text,
-              userId: DeviceInfo.deviceId.toString());
-          controller.userJoinLeft(nameController.text, "joined");
+
+          FirebaseApi.userJoinLeft("joined", roomController.text);
           Get.to(() => ChatRoom(
               roomId: roomController.text,
               userId: DeviceInfo.deviceId.toString()));
@@ -98,7 +91,7 @@ class RoomDialogController extends GetxController {
           Get.snackbar(
             backgroundColor: Colors.red,
             'Room Does not Exist',
-            'Try changing Room No or Create Room: ${roomController.text}',
+            'Try changing Room no. or Create Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
         } else {

@@ -26,7 +26,6 @@ Future<UserCredential> signInWithGoogle() async {
 googleLogin() {
   WidgetUtil.buildCircularProgressIndicator();
   signInWithGoogle().then((user) {
-    print(user);
     Get.off(() => const SearchPage());
   });
 }

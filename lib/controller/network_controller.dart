@@ -15,32 +15,32 @@ class NetworkController extends GetxController {
   }
 
   void updateConnectionStatus(List<ConnectivityResult> connectivityResultList) {
-    if (connectivityResultList.contains(ConnectivityResult.mobile)) {
-      chk = true;
-      connectionStatus.value = "Connected with Mobile Data";
-      AppConstants.log.i(connectionStatus.value);
-    }
+    // if (connectivityResultList.contains(ConnectivityResult.mobile)) {
+    //   chk = true;
+    //   connectionStatus.value = "Connected with Mobile Data";
+    //   AppConstants.log.i(connectionStatus.value);
+    // }
 
-    if (connectivityResultList.contains(ConnectivityResult.wifi)) {
-      chk = true;
-      connectionStatus.value = "Connected with Wifi";
-      AppConstants.log.i(connectionStatus.value);
-    }
-    if (connectivityResultList.contains(ConnectivityResult.vpn)) {
-      chk = true;
-      connectionStatus.value = "Connected with VPN";
-      AppConstants.log.i(connectionStatus.value);
-    }
-    if (connectivityResultList.contains(ConnectivityResult.ethernet)) {
-      chk = true;
-      connectionStatus.value = "Connected with Ethernet";
-      AppConstants.log.i(connectionStatus.value);
-    }
-    if (connectivityResultList.contains(ConnectivityResult.bluetooth)) {
-      chk = true;
-      connectionStatus.value = "Connected with Bluetooth";
-      AppConstants.log.i(connectionStatus.value);
-    }
+    // if (connectivityResultList.contains(ConnectivityResult.wifi)) {
+    //   chk = true;
+    //   connectionStatus.value = "Connected with Wifi";
+    //   AppConstants.log.i(connectionStatus.value);
+    // }
+    // if (connectivityResultList.contains(ConnectivityResult.vpn)) {
+    //   chk = true;
+    //   connectionStatus.value = "Connected with VPN";
+    //   AppConstants.log.i(connectionStatus.value);
+    // }
+    // if (connectivityResultList.contains(ConnectivityResult.ethernet)) {
+    //   chk = true;
+    //   connectionStatus.value = "Connected with Ethernet";
+    //   AppConstants.log.i(connectionStatus.value);
+    // }
+    // if (connectivityResultList.contains(ConnectivityResult.bluetooth)) {
+    //   chk = true;
+    //   connectionStatus.value = "Connected with Bluetooth";
+    //   AppConstants.log.i(connectionStatus.value);
+    // }
     if (connectivityResultList.contains(ConnectivityResult.none)) {
       chk = false;
       connectionStatus.value = "No Internet Available";
@@ -51,14 +51,15 @@ class NetworkController extends GetxController {
       connectionStatus.value = "Something went wrong";
       AppConstants.log.i(connectionStatus.value);
     }
-
-    Get.snackbar(
-      "Network Status",
-      connectionStatus.value,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: chk ? Colors.green : Colors.red.shade100,
-      colorText: Colors.black,
-      isDismissible: false,
-    );
+    if (chk) {
+      Get.snackbar(
+        "Network Status",
+        connectionStatus.value,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.black,
+        isDismissible: false,
+      );
+    }
   }
 }

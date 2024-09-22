@@ -31,7 +31,6 @@ class _MyDataState extends State<MyData> {
               }
 
               // print("-----${myData}------------");
-              print(myData);
             }
             return ListView.builder(
               itemBuilder: (context, index) {

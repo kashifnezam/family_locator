@@ -13,8 +13,8 @@ class LocationUtils {
 
   static void getCurrentLocation({
     required Function(LatLng) onLocationLoaded,
-    required Function(String) onError,
-    required Function() onStartMoving,
+    Function(String)? onError,
+    Function() ?onStartMoving,
   }) async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -33,7 +33,7 @@ class LocationUtils {
         },
         textCancel: 'No',
         onCancel: () {
-          onError("Location services are disabled.");
+          onError!("Location services are disabled.");
         },
       );
     }
@@ -43,14 +43,14 @@ class LocationUtils {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        onError("Location permissions are denied.");
+        onError!("Location permissions are denied.");
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        onError("Location permissions are denied.");
+        onError!("Location permissions are denied.");
       }
     }
 
@@ -71,7 +71,7 @@ class LocationUtils {
                 currentLocation.longitude,
               ) >=
               distanceThreshold) {
-        onStartMoving();
+        onStartMoving!();
       }
 
       // Update the previous location
@@ -80,7 +80,7 @@ class LocationUtils {
       // Convert to LatLng and call the callback
       onLocationLoaded(currentLocation);
     }, onError: (e) {
-      onError("Error getting live location: $e");
+      onError!("Error getting live location: $e");
     });
   }
 

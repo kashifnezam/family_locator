@@ -3,7 +3,9 @@ import 'package:family_locator/api/save_data.dart';
 import 'package:family_locator/pages/room_dialogue.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
+import 'package:family_locator/utils/offline_data.dart';
 import 'package:family_locator/widgets/button_widget.dart';
+import 'package:family_locator/widgets/username_dialogue.dart';
 import 'package:family_locator/widgets/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -162,6 +164,8 @@ class SearchPageState extends State<SearchPage> {
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
+              cameraConstraint:
+                  CameraConstraint.contain(bounds: MapConstants.maxBounds),
               initialCenter: _center,
               initialZoom: _zoom,
             ),
@@ -250,8 +254,23 @@ class SearchPageState extends State<SearchPage> {
                   top: AppConstants.height * 0.1,
                   left: AppConstants.width * 0.25),
               child: GestureDetector(
-                onTap: () {
-                  Get.dialog(RoomDialog());
+                onTap: () async {
+                  String? usr = await OfflineData.getData("usr");
+                  if (usr != null) {
+                    String? dateString = await OfflineData.getData("date");
+                    if (dateString != null) {
+                      DateTime date = DateTime.parse(dateString);
+                      if (DateTime.now()
+                          .isAfter(date.add(const Duration(days: 7)))) {
+                        usr = null;
+                      }
+                    }
+                  }
+
+                  AppConstants.log.e(await OfflineData.getData("usr"));
+                  usr != null
+                      ? Get.dialog(RoomDialog())
+                      : Get.dialog(UsernameDialog());
                 },
                 child: ButtonWidget.elevatedBtn("Family Room"),
               ),
