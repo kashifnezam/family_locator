@@ -267,7 +267,7 @@ class SearchPageState extends State<SearchPage> {
                     }
                   }
 
-                  AppConstants.log.e(await OfflineData.getData("usr"));
+                  AppConstants.log.e(usr);
                   usr != null
                       ? Get.dialog(RoomDialog())
                       : Get.dialog(UsernameDialog());

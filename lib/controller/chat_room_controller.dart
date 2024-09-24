@@ -197,7 +197,6 @@ class ChatRoomController extends GetxController {
           .get();
 
       for (var doc in userDocs.docs) {
-        AppConstants.log.i(doc.get('usr'));
         userNames[doc.id] = doc.get('usr') ?? 'Unknown';
       }
       AppConstants.log.i(userNames);

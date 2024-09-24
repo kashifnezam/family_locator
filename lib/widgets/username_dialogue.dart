@@ -25,9 +25,7 @@ class UsernameDialog extends StatelessWidget {
                     ? null
                     : controller.isNotValidMsg.toString(),
               ),
-              // onChanged: (value) {
-              //   controller.validateUsername(value.toString().trim().toLowerCase());
-              // },
+             
             );
           }),
         ],

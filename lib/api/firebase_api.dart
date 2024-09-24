@@ -29,9 +29,10 @@ class FirebaseApi {
   }
 
   static Future<void> updateLocation(String loc, String id) async {
-    _firestore.collection("anonymous").doc(id).update(
-      {'currLoc': loc},
-    );
+    _firestore
+        .collection("anonymous")
+        .doc(id)
+        .set({'currLoc': loc}, SetOptions(merge: true));
   }
 
   // Fetch a specific document by ID within a specific collection
@@ -82,7 +83,7 @@ class FirebaseApi {
           _firestore.collection(col).doc(docId);
 
       // Set the data in the document
-      await documentReference.set(user.toJson());
+      await documentReference.set(user.toJson(), SetOptions(merge: true));
       AppConstants.log.i(
           "User data added successfully to document $docId in collection $col.");
       return true; // Operation successful
@@ -100,7 +101,7 @@ class FirebaseApi {
     try {
       DocumentReference memberDocument = _firestore.collection(col).doc(docId);
 
-      await memberDocument.update(updatedUser.toJson());
+      await memberDocument.set(updatedUser.toJson(), SetOptions(merge: true));
       AppConstants.log.i("User updated successfully in $col.");
       return true; // Operation successful
     } catch (e) {
@@ -126,7 +127,7 @@ class FirebaseApi {
       // } else {
       // Document does not exist, add the data
       // }
-      await documentReference.update(data.toJson());
+      await documentReference.set(data.toJson(), SetOptions(merge: true));
       AppConstants.log.i(
           'Data added successfully to document $documentId in collection $collection.');
       return true; // Indicate that the data was added successfully
@@ -158,10 +159,10 @@ class FirebaseApi {
       await FirebaseFirestore.instance
           .collection('anonymous')
           .doc(deviceId)
-          .update({
+          .set({
         'roomId': FieldValue.arrayUnion([roomId]),
         'name': name,
-      });
+      }, SetOptions(merge: true));
       await FirebaseFirestore.instance
           .collection('roomDetail')
           .doc(roomId)
@@ -170,7 +171,7 @@ class FirebaseApi {
         'roomName': "$name's Room",
         "owner": deviceId,
         "created": DateTime.now().toString()
-      });
+      }, SetOptions(merge: true));
       AppConstants.log.i('Room number added successfully');
       return 1;
     } catch (e) {
@@ -188,15 +189,15 @@ class FirebaseApi {
       await FirebaseFirestore.instance
           .collection('anonymous')
           .doc(deviceId)
-          .update({
+          .set({
         'roomId': FieldValue.arrayUnion([roomId]),
-      });
+      }, SetOptions(merge: true));
       await FirebaseFirestore.instance
           .collection('roomDetail')
           .doc(roomId)
-          .update({
+          .set({
         'members': FieldValue.arrayUnion([deviceId]),
-      });
+      }, SetOptions(merge: true));
       AppConstants.log.i('Room number added successfully');
       return 1;
     } catch (e) {
@@ -226,7 +227,7 @@ class FirebaseApi {
   }
 
   /// Checks if the given username is already used in the 'anonymous' collection.
-  static Future<bool> checkUsernameExists(String username) async {
+  static Future<int> checkUsernameExists(String username) async {
     try {
       // Query the 'anonymous' collection to check if the username exists
       QuerySnapshot querySnapshot = await _firestore
@@ -239,23 +240,23 @@ class FirebaseApi {
         String? deviceId = DeviceInfo.deviceId;
         if (deviceId == null) {
           AppConstants.log.e('Device ID is not available.');
-          return false; // Fail gracefully if deviceId is null
+          return 2; // Fail gracefully if deviceId is null
         }
 
         // If no such username, update the 'usr' field with the new username
         await FirebaseFirestore.instance
             .collection('anonymous')
             .doc(deviceId)
-            .update({
+            .set({
           'usr': username,
-        });
+        }, SetOptions(merge: true));
       }
 
       // Return true if username does not exist, false otherwise
-      return querySnapshot.docs.isEmpty;
+      return querySnapshot.docs.isEmpty ? 1 : 0;
     } catch (e) {
       AppConstants.log.e('Error checking username availability: $e');
-      return false; // Indicate failure
+      return 3; // Indicate failure
     }
   }
 }

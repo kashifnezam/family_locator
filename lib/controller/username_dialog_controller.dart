@@ -30,15 +30,22 @@ class UsernameDialogController extends GetxController {
     validateUsername(username);
     AppConstants.log.i(isValid.value);
     if (isValid.value) {
-      if (await FirebaseApi.checkUsernameExists(username)) {
-        OfflineData.setData(
-            "usr", usernameController.text, true); // Proceed with the valid username
+      int sts = await FirebaseApi.checkUsernameExists(username);
+      if (sts == 1) {
+        OfflineData.setData("usr", usernameController.text,
+            true); // Proceed with the valid username
         Get.back(result: usernameController.text); // Return the username
         Get.snackbar(
             username, "username set for 1 week, login for permanent username");
-      } else {
+      } else if (sts == 0) {
         isValid.value = false;
         isNotValidMsg.value = "username already exists!";
+      } else if (sts == 2) {
+        isValid.value = false;
+        isNotValidMsg.value = "Device ID not found!";
+      } else {
+        isValid.value = false;
+        isNotValidMsg.value = "Something went wrong";
       }
     }
   }
