@@ -12,8 +12,13 @@ import '../models/message_model.dart';
 class ChatRoom extends StatefulWidget {
   final String roomId;
   final String userId;
+  final String roomName;
 
-  const ChatRoom({super.key, required this.roomId, required this.userId});
+  const ChatRoom(
+      {super.key,
+      required this.roomId,
+      required this.userId,
+      required this.roomName});
 
   @override
   ChatRoomState createState() => ChatRoomState();
@@ -30,8 +35,11 @@ class ChatRoomState extends State<ChatRoom> {
 
   @override
   Widget build(BuildContext context) {
-    final ChatRoomController controller = Get.put(
-        ChatRoomController(roomId: widget.roomId, userId: widget.userId));
+    var counter = 9;
+    final ChatRoomController controller = Get.put(ChatRoomController(
+        roomId: widget.roomId,
+        userId: widget.userId,
+        rooomName: widget.roomName));
     final TextEditingController messageController = TextEditingController();
     return WillPopScope(
       // This widget captures the back button press
@@ -41,7 +49,45 @@ class ChatRoomState extends State<ChatRoom> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Chat Room'),
+          title: ListTile(
+            title: Text(widget.roomName),
+            subtitle: Text(widget.roomId),
+          ),
+          actions: [
+            Stack(
+              children: <Widget>[
+                IconButton(
+                  onPressed: controller.toggleNotification,
+                  icon: const Icon(Icons.notifications),
+                ),
+                counter != 0
+                    ? Positioned(
+                        right: 11,
+                        top: 11,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 14,
+                            minHeight: 14,
+                          ),
+                          child: Text(
+                            '$counter',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    : Container()
+              ],
+            ),
+          ],
         ),
         body: Stack(
           children: [
@@ -354,6 +400,80 @@ class ChatRoomState extends State<ChatRoom> {
                       );
               }),
             ),
+            Obx(() {
+              if (controller.isNotification.value) {
+                return Container(
+                  color: Colors.amberAccent
+                      .shade100, // Lighter background for better contrast
+                  child: ListView.builder(
+                    itemCount: 4, // Number of list items
+                    itemBuilder: (context, index) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 4,
+                            horizontal: 8), // Add spacing between items
+                        decoration: BoxDecoration(
+                          color: Colors.white, // Background for each list item
+                          borderRadius:
+                              BorderRadius.circular(8), // Rounded corners
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2), // Shadow position
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
+                          title: Text("Item ${index + 1}",
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.greenAccent
+                                      .shade400, // Custom color for accept button
+                                  shape:
+                                      const CircleBorder(), // Rounded shape for button
+                                  padding: const EdgeInsets.all(
+                                      8), // Padding to adjust size
+                                ),
+                                onPressed: () {
+                                  // Handle accept button press
+                                },
+                                child: const Icon(Icons.check,
+                                    color: Colors.white),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent
+                                      .shade400, // Custom color for reject button
+                                  shape: const CircleBorder(),
+                                  padding: const EdgeInsets.all(8),
+                                ),
+                                onPressed: () {
+                                  // Handle reject button press
+                                },
+                                child: const Icon(Icons.close,
+                                    color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              } else {
+                return const SizedBox
+                    .shrink(); // To ensure the Positioned widget is not shown when the condition is false.
+              }
+            }),
           ],
         ),
       ),

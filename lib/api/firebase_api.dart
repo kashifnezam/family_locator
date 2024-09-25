@@ -119,14 +119,6 @@ class FirebaseApi {
       DocumentReference documentReference =
           _firestore.collection(collection).doc(documentId);
 
-      // if (await isDocumentExists(collection, documentId)) {
-      //   // Document already exists, do not overwrite
-      //   AppConstants.log.e(
-      //       'Document with ID $documentId already exists. Data will not be overwritten.');
-      //   return false; // Indicate that the document already exists
-      // } else {
-      // Document does not exist, add the data
-      // }
       await documentReference.set(data.toJson(), SetOptions(merge: true));
       AppConstants.log.i(
           'Data added successfully to document $documentId in collection $collection.');
@@ -185,25 +177,19 @@ class FirebaseApi {
       AppConstants.log.e("Room with this id does not Exist");
       return 0;
     }
-    try {
-      await FirebaseFirestore.instance
-          .collection('anonymous')
-          .doc(deviceId)
-          .set({
-        'roomId': FieldValue.arrayUnion([roomId]),
-      }, SetOptions(merge: true));
-      await FirebaseFirestore.instance
-          .collection('roomDetail')
-          .doc(roomId)
-          .set({
-        'members': FieldValue.arrayUnion([deviceId]),
-      }, SetOptions(merge: true));
-      AppConstants.log.i('Room number added successfully');
-      return 1;
-    } catch (e) {
-      AppConstants.log.e('Error adding room number: $e');
-      return -1;
+    List<String> members =
+        await getRoomMembers(roomId, "roomDetail", "members");
+    if (!members.contains(deviceId)) {
+      List<String> pending =
+          await getRoomMembers(roomId, "roomDetail", "pending");
+      if (!pending.contains(deviceId)) {
+        addDeviceToCollection("roomDetail", roomId, deviceId, "pending");
+      } else {
+        return -3;
+      }
+      return -2;
     }
+    return 1;
   }
 
   static Future<void> userJoinLeft(String status, String roomId) async {
@@ -259,4 +245,62 @@ class FirebaseApi {
       return 3; // Indicate failure
     }
   }
+
+  // Method to get the list of members for a specific roomId
+  static Future<List<String>> getRoomMembers(
+      String roomId, String collectionName, String fieldName) async {
+    try {
+      // Fetch the room details document from Firestore
+      DocumentSnapshot roomDoc =
+          await _firestore.collection(collectionName).doc(roomId).get();
+
+      // Check if the room document exists
+      if (!roomDoc.exists) {
+        AppConstants.log.e("Room Does not exist");
+        return [];
+      }
+
+      // Extract the members list from the room document
+      List<dynamic> members = roomDoc.get(fieldName) ?? [];
+
+      // Ensure the members list contains strings and return it
+      List<String> memberList = members.cast<String>();
+
+      return memberList;
+    } catch (e) {
+      // Handle any errors during the Firestore operation
+      AppConstants.log.e("Error retrieving room members: $e");
+      return [];
+    }
+  }
+
+  // Add confirm, pending users
+  static Future<void> addDeviceToCollection(String collectionName,
+      String docName, String deviceId, String fieldName) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection(collectionName)
+          .doc(docName)
+          .set({
+        fieldName: FieldValue.arrayUnion([deviceId]),
+      }, SetOptions(merge: true));
+      AppConstants.log.i('Device ID added successfully');
+    } catch (e) {
+      AppConstants.log.e('Error adding device ID: $e');
+    }
+  }
+
+  // get Room Name
+  static Future<String> getRoomName(String roomNo) async {
+    DocumentSnapshot roomDoc =
+        await _firestore.collection("roomDetail").doc(roomNo).get();
+    if (!roomDoc.exists) {
+      AppConstants.log.e("Room Does not exist");
+      return "Chat Room(Unknown)";
+    }
+    return roomDoc.get("roomName") ?? "Chat Room";
+  }
 }
+
+// addDeviceToCollection("anonymous", deviceID, roomId, "roomId");
+//       addDeviceToCollection("roomDetail", roomId, deviceId, "roomId");

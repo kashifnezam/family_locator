@@ -15,6 +15,7 @@ class ChatRoomController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String roomId;
   final String userId;
+  final String rooomName;
   Timer? _debounceTimer; // Timer for debounce
 
   RxList<MessageModel> messages = <MessageModel>[].obs;
@@ -24,6 +25,7 @@ class ChatRoomController extends GetxController {
   RxBool isLoading = true.obs;
   RxBool isMapExpanded = false.obs;
   RxBool isLargerMap = false.obs;
+  RxBool isNotification = false.obs;
   Rx<LatLng?> selectedLocation = Rx<LatLng?>(null);
   RxDouble zoomLevel = 2.0.obs;
   DocumentSnapshot? _lastDocument;
@@ -40,7 +42,7 @@ class ChatRoomController extends GetxController {
   late StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
       locationsSubscription;
 
-  ChatRoomController({required this.roomId, required this.userId});
+  ChatRoomController({required this.roomId, required this.userId, required this.rooomName});
 
   @override
   void onInit() {
@@ -74,8 +76,12 @@ class ChatRoomController extends GetxController {
   void toggleMapExpansion() {
     isMapExpanded.toggle();
   }
+
   void toggleLargeMap() {
     isLargerMap.toggle();
+  }
+  void toggleNotification() {
+    isNotification.toggle();
   }
 
   // to get the bounds of all users location
@@ -172,18 +178,12 @@ class ChatRoomController extends GetxController {
     }
   }
 
+  // Updated method using getRoomMembers to fetch usernames
   Future<void> fetchUserNames(String roomId) async {
     try {
-      // Fetch the room details document
-      var roomDoc = await _firestore.collection('roomDetail').doc(roomId).get();
-
-      if (!roomDoc.exists) {
-        AppConstants.log.e('Room not found');
-        return;
-      }
-
-      // Extract the members list from the room document
-      List<dynamic> members = roomDoc.get('members') ?? [];
+      // Fetch the list of members using the getRoomMembers method
+      List<String> members =
+          await FirebaseApi.getRoomMembers(roomId, "roomDetail", "members");
 
       if (members.isEmpty) {
         AppConstants.log.i('No members found in room.');
@@ -197,10 +197,14 @@ class ChatRoomController extends GetxController {
           .get();
 
       for (var doc in userDocs.docs) {
+        // Store each username in the userNames map
         userNames[doc.id] = doc.get('usr') ?? 'Unknown';
       }
+
+      // Log the fetched usernames
       AppConstants.log.i(userNames);
     } catch (e) {
+      // Handle any errors during the operation
       AppConstants.log.e('Error fetching user names: $e');
     }
   }

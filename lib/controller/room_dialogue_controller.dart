@@ -53,9 +53,13 @@ class RoomDialogController extends GetxController {
             snackPosition: SnackPosition.TOP,
           );
 
-          Get.to(() => ChatRoom(
+          Get.to(
+            () => ChatRoom(
               roomId: roomController.text,
-              userId: DeviceInfo.deviceId.toString()));
+              userId: DeviceInfo.deviceId.toString(),
+              roomName: "Chat Room",
+            ),
+          );
         } else if (response == 0) {
           Get.snackbar(
             backgroundColor: Colors.red,
@@ -74,6 +78,8 @@ class RoomDialogController extends GetxController {
       } else {
         final response = await FirebaseApi.roomJoin(
             DeviceInfo.deviceId!, roomController.text);
+        final name = await FirebaseApi.getRoomName(roomController.text);
+
         if (response == 1) {
           Get.back();
           Get.snackbar(
@@ -84,14 +90,32 @@ class RoomDialogController extends GetxController {
           );
 
           FirebaseApi.userJoinLeft("joined", roomController.text);
-          Get.to(() => ChatRoom(
+          Get.to(
+            () => ChatRoom(
               roomId: roomController.text,
-              userId: DeviceInfo.deviceId.toString()));
+              userId: DeviceInfo.deviceId.toString(),
+              roomName: name,
+            ),
+          );
         } else if (response == 0) {
           Get.snackbar(
             backgroundColor: Colors.red,
             'Room Does not Exist',
             'Try changing Room no. or Create Room: ${roomController.text}',
+            snackPosition: SnackPosition.TOP,
+          );
+        } else if (response == -2) {
+          Get.snackbar(
+            backgroundColor: Colors.yellow,
+            "Join Request Succesfully",
+            "Request to join Room Id: ${roomController.text} is sent",
+            snackPosition: SnackPosition.TOP,
+          );
+        } else if (response == -3) {
+          Get.snackbar(
+            backgroundColor: const Color.fromARGB(255, 60, 238, 197),
+            "ALready Requested",
+            "Please ask admin to accept your request",
             snackPosition: SnackPosition.TOP,
           );
         } else {
