@@ -15,7 +15,8 @@ class ChatRoomController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String roomId;
   final String userId;
-  final String rooomName;
+  final String roomName;
+  final String owner;
   Timer? _debounceTimer; // Timer for debounce
 
   RxList<MessageModel> messages = <MessageModel>[].obs;
@@ -30,6 +31,7 @@ class ChatRoomController extends GetxController {
   RxDouble zoomLevel = 2.0.obs;
   DocumentSnapshot? _lastDocument;
   RxList<LatLng> routePoints = <LatLng>[].obs;
+  RxList<String> notifCount = <String>[].obs;
 
   bool _hasMoreMessages = true;
   final mapController = MapController();
@@ -41,8 +43,13 @@ class ChatRoomController extends GetxController {
   late StreamSubscription<QuerySnapshot> messagesSubscription;
   late StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
       locationsSubscription;
+  late StreamSubscription<List<String>>? notifSubscription;
 
-  ChatRoomController({required this.roomId, required this.userId, required this.rooomName});
+  ChatRoomController(
+      {required this.roomId,
+      required this.userId,
+      required this.roomName,
+      required this.owner});
 
   @override
   void onInit() {
@@ -51,6 +58,7 @@ class ChatRoomController extends GetxController {
     fetchLocations();
     scrollController.addListener(_scrollListener);
     listenToMessages(); // Start listening to messages
+    if (owner == DeviceInfo.deviceId) startListeningNotification();
   }
 
   @override
@@ -58,6 +66,7 @@ class ChatRoomController extends GetxController {
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
     FirebaseApi.userJoinLeft("left", roomId);
+    stopListeningNotification();
     super.onClose();
   }
 
@@ -80,6 +89,7 @@ class ChatRoomController extends GetxController {
   void toggleLargeMap() {
     isLargerMap.toggle();
   }
+
   void toggleNotification() {
     isNotification.toggle();
   }
@@ -184,8 +194,11 @@ class ChatRoomController extends GetxController {
       // Fetch the list of members using the getRoomMembers method
       List<String> members =
           await FirebaseApi.getRoomMembers(roomId, "roomDetail", "members");
+      List<String> pending =
+          await FirebaseApi.getRoomMembers(roomId, "roomDetail", "pending");
+      List<String> combinedList = [...members, ...pending];
 
-      if (members.isEmpty) {
+      if (combinedList.isEmpty) {
         AppConstants.log.i('No members found in room.');
         return;
       }
@@ -193,7 +206,7 @@ class ChatRoomController extends GetxController {
       // Fetch details of each user in the members list
       var userDocs = await _firestore
           .collection('anonymous')
-          .where(FieldPath.documentId, whereIn: members)
+          .where(FieldPath.documentId, whereIn: combinedList)
           .get();
 
       for (var doc in userDocs.docs) {
@@ -405,5 +418,54 @@ class ChatRoomController extends GetxController {
         scrollToBottom();
       }
     });
+  }
+
+  Stream<List<String>> listenToRoomMembers(
+      String roomId, String collectionName, String fieldName) {
+    return FirebaseFirestore.instance
+        .collection(collectionName)
+        .doc(roomId)
+        .snapshots() // Listen for real-time changes
+        .map((snapshot) {
+      // Check if the document exists
+      if (!snapshot.exists) {
+        AppConstants.log.e("Room does not exist");
+        return <String>[]; // Return an empty list if the room doesn't exist
+      }
+
+      // Check if the field exists in the document
+      if (!snapshot.data()!.containsKey(fieldName)) {
+        AppConstants.log.w("Field '$fieldName' does not exist in the document");
+        return <String>[]; // Return an empty list if the field doesn't exist
+      }
+
+      // Extract the specified field and ensure it's a list
+      List<dynamic> members = snapshot.get(fieldName) ?? [];
+
+      // Cast the dynamic list to List<String> and return it
+      return members.cast<String>();
+    }).handleError((error) {
+      // Handle any errors
+      AppConstants.log.e("Error listening to room members: $error");
+      return <String>[]; // Return an empty list on error
+    });
+  }
+
+  void startListeningNotification() {
+    notifSubscription =
+        listenToRoomMembers(roomId, 'roomDetail', 'pending').listen((members) {
+      // Handle real-time updates here
+      AppConstants.log.i('Updated members: $members');
+
+      // Clear the existing list before adding new members
+      notifCount.clear();
+
+      // Add the updated members list to notifCount
+      notifCount.addAll(members);
+    });
+  }
+
+  void stopListeningNotification() {
+    notifSubscription?.cancel();
   }
 }

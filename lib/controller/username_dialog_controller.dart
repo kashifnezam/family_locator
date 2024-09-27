@@ -1,5 +1,4 @@
 import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/offline_data.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -28,15 +27,17 @@ class UsernameDialogController extends GetxController {
   Future<void> submit() async {
     String username = usernameController.text.trim().toLowerCase();
     validateUsername(username);
-    AppConstants.log.i(isValid.value);
     if (isValid.value) {
       int sts = await FirebaseApi.checkUsernameExists(username);
       if (sts == 1) {
         OfflineData.setData("usr", usernameController.text,
             true); // Proceed with the valid username
-        Get.back(result: usernameController.text); // Return the username
+        Get.back();
         Get.snackbar(
-            username, "username set for 1 week, login for permanent username");
+          username,
+          "username valid for 1 week, please LOGIN for permanent username",
+          backgroundColor: Colors.greenAccent,
+        );
       } else if (sts == 0) {
         isValid.value = false;
         isNotValidMsg.value = "username already exists!";

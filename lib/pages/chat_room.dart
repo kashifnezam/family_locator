@@ -1,3 +1,4 @@
+import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:flutter/material.dart';
@@ -13,12 +14,15 @@ class ChatRoom extends StatefulWidget {
   final String roomId;
   final String userId;
   final String roomName;
+  final String owner;
 
-  const ChatRoom(
-      {super.key,
-      required this.roomId,
-      required this.userId,
-      required this.roomName});
+  const ChatRoom({
+    super.key,
+    required this.roomId,
+    required this.userId,
+    required this.roomName,
+    required this.owner,
+  });
 
   @override
   ChatRoomState createState() => ChatRoomState();
@@ -35,15 +39,17 @@ class ChatRoomState extends State<ChatRoom> {
 
   @override
   Widget build(BuildContext context) {
-    var counter = 9;
     final ChatRoomController controller = Get.put(ChatRoomController(
-        roomId: widget.roomId,
-        userId: widget.userId,
-        rooomName: widget.roomName));
+      roomId: widget.roomId,
+      userId: widget.userId,
+      roomName: widget.roomName,
+      owner: widget.owner,
+    ));
     final TextEditingController messageController = TextEditingController();
     return WillPopScope(
       // This widget captures the back button press
       onWillPop: () async {
+        if (controller.isNotification.value) return true;
         bool shouldLeave = await _showExitConfirmationDialog(context);
         return shouldLeave; // Return true if the user confirms to exit, false otherwise.
       },
@@ -54,39 +60,40 @@ class ChatRoomState extends State<ChatRoom> {
             subtitle: Text(widget.roomId),
           ),
           actions: [
-            Stack(
-              children: <Widget>[
-                IconButton(
-                  onPressed: controller.toggleNotification,
-                  icon: const Icon(Icons.notifications),
-                ),
-                counter != 0
-                    ? Positioned(
-                        right: 11,
-                        top: 11,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 14,
-                            minHeight: 14,
-                          ),
-                          child: Text(
-                            '$counter',
+            if (widget.owner == widget.userId)
+              Stack(
+                children: <Widget>[
+                  IconButton(
+                    onPressed: controller.toggleNotification,
+                    icon: const Icon(Icons.notifications),
+                  ),
+                  Positioned(
+                    right: 11,
+                    top: 11,
+                    child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 14,
+                          minHeight: 14,
+                        ),
+                        child: Obx(() {
+                          return Text(
+                            controller.notifCount.length
+                                .toString(), // Convert length to a string
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 8,
                             ),
                             textAlign: TextAlign.center,
-                          ),
-                        ),
-                      )
-                    : Container()
-              ],
-            ),
+                          );
+                        })),
+                  )
+                ],
+              ),
           ],
         ),
         body: Stack(
@@ -402,78 +409,124 @@ class ChatRoomState extends State<ChatRoom> {
             ),
             Obx(() {
               if (controller.isNotification.value) {
-                return Container(
-                  color: Colors.amberAccent
-                      .shade100, // Lighter background for better contrast
-                  child: ListView.builder(
-                    itemCount: 4, // Number of list items
-                    itemBuilder: (context, index) {
-                      return Container(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 4,
-                            horizontal: 8), // Add spacing between items
-                        decoration: BoxDecoration(
-                          color: Colors.white, // Background for each list item
-                          borderRadius:
-                              BorderRadius.circular(8), // Rounded corners
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2), // Shadow position
-                            ),
-                          ],
+                return WillPopScope(
+                  onWillPop: () async {
+                    controller.isNotification.value = false;
+                    return false;
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(
+                        12), // Adds padding around the content
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(10), // Rounded corners
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3), // Slight shadow for depth
                         ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 4),
-                          title: Text("Item ${index + 1}",
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.greenAccent
-                                      .shade400, // Custom color for accept button
-                                  shape:
-                                      const CircleBorder(), // Rounded shape for button
-                                  padding: const EdgeInsets.all(
-                                      8), // Padding to adjust size
-                                ),
-                                onPressed: () {
-                                  // Handle accept button press
-                                },
-                                child: const Icon(Icons.check,
-                                    color: Colors.white),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.redAccent
-                                      .shade400, // Custom color for reject button
-                                  shape: const CircleBorder(),
-                                  padding: const EdgeInsets.all(8),
-                                ),
-                                onPressed: () {
-                                  // Handle reject button press
-                                },
-                                child: const Icon(Icons.close,
-                                    color: Colors.white),
-                              ),
-                            ],
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            "Requested Users",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      );
-                    },
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: controller
+                                .notifCount.length, // Number of notifications
+                            itemBuilder: (context, index) {
+                              var id = controller.notifCount[index];
+                              return Container(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.amberAccent.shade100,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        controller.userNames[id] ??
+                                            id, // Notification content
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          onPressed: () {
+                                            FirebaseApi
+                                                .modifyDeviceInCollection(
+                                                    "roomDetail",
+                                                    widget.roomId,
+                                                    id,
+                                                    "members",
+                                                    true);
+                                            FirebaseApi
+                                                .modifyDeviceInCollection(
+                                                    "roomDetail",
+                                                    widget.roomId,
+                                                    id,
+                                                    "pending",
+                                                    false);
+                                          },
+                                          icon: const Icon(
+                                            Icons.check,
+                                            color: Colors.greenAccent,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          onPressed: () {
+                                            FirebaseApi
+                                                .modifyDeviceInCollection(
+                                                    "roomDetail",
+                                                    widget.roomId,
+                                                    id,
+                                                    "pending",
+                                                    false);
+                                          },
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.redAccent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               } else {
                 return const SizedBox
-                    .shrink(); // To ensure the Positioned widget is not shown when the condition is false.
+                    .shrink(); // No content when there are no notifications.
               }
-            }),
+            })
           ],
         ),
       ),

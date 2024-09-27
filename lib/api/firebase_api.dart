@@ -183,7 +183,7 @@ class FirebaseApi {
       List<String> pending =
           await getRoomMembers(roomId, "roomDetail", "pending");
       if (!pending.contains(deviceId)) {
-        addDeviceToCollection("roomDetail", roomId, deviceId, "pending");
+        modifyDeviceInCollection("roomDetail", roomId, deviceId, "pending", true);
       } else {
         return -3;
       }
@@ -275,20 +275,32 @@ class FirebaseApi {
   }
 
   // Add confirm, pending users
-  static Future<void> addDeviceToCollection(String collectionName,
-      String docName, String deviceId, String fieldName) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection(collectionName)
-          .doc(docName)
-          .set({
-        fieldName: FieldValue.arrayUnion([deviceId]),
-      }, SetOptions(merge: true));
-      AppConstants.log.i('Device ID added successfully');
-    } catch (e) {
-      AppConstants.log.e('Error adding device ID: $e');
-    }
+  static Future<void> modifyDeviceInCollection(
+    String collectionName,
+    String docName,
+    String deviceId,
+    String fieldName,
+    bool shouldAdd) async {
+  try {
+    // Determine the FieldValue operation based on the shouldAdd flag
+    var operation = shouldAdd
+        ? FieldValue.arrayUnion([deviceId])   // Add device ID
+        : FieldValue.arrayRemove([deviceId]); // Remove device ID
+
+    // Perform the Firestore update
+    await FirebaseFirestore.instance
+        .collection(collectionName)
+        .doc(docName)
+        .set({
+      fieldName: operation,
+    }, SetOptions(merge: true));
+
+    AppConstants.log.i(
+        shouldAdd ? 'Device ID added successfully' : 'Device ID removed successfully');
+  } catch (e) {
+    AppConstants.log.e('Error modifying device ID: $e');
   }
+}
 
   // get Room Name
   static Future<String> getRoomName(String roomNo) async {
@@ -300,7 +312,19 @@ class FirebaseApi {
     }
     return roomDoc.get("roomName") ?? "Chat Room";
   }
+
+  // Get Amdin
+  static Future<String> getAdmin(String roomNo, String deviceId) async {
+    DocumentSnapshot roomDoc =
+        await _firestore.collection("roomDetail").doc(roomNo).get();
+    if (!roomDoc.exists) {
+      AppConstants.log.e("Room Does not exist");
+      return "";
+    }
+    return roomDoc.get("owner") ?? "";
+  }
 }
+
 
 // addDeviceToCollection("anonymous", deviceID, roomId, "roomId");
 //       addDeviceToCollection("roomDetail", roomId, deviceId, "roomId");

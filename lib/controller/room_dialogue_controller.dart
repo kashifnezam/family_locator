@@ -45,11 +45,13 @@ class RoomDialogController extends GetxController {
             DeviceInfo.deviceId!, roomController.text, nameController.text);
 
         if (response == 1) {
+          String owner = await FirebaseApi.getAdmin(
+              roomController.text, DeviceInfo.deviceId ?? "");
           Get.back();
           Get.snackbar(
             backgroundColor: Colors.green,
             'Created Room',
-            'Name: ${OfflineData.getData("usr")}, Room: ${roomController.text}',
+            'Name: ${await OfflineData.getData("usr")}, Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
 
@@ -58,6 +60,7 @@ class RoomDialogController extends GetxController {
               roomId: roomController.text,
               userId: DeviceInfo.deviceId.toString(),
               roomName: "Chat Room",
+              owner: owner,
             ),
           );
         } else if (response == 0) {
@@ -81,6 +84,9 @@ class RoomDialogController extends GetxController {
         final name = await FirebaseApi.getRoomName(roomController.text);
 
         if (response == 1) {
+          String owner = await FirebaseApi.getAdmin(
+              roomController.text, DeviceInfo.deviceId ?? "");
+
           Get.back();
           Get.snackbar(
             backgroundColor: Colors.green,
@@ -95,6 +101,7 @@ class RoomDialogController extends GetxController {
               roomId: roomController.text,
               userId: DeviceInfo.deviceId.toString(),
               roomName: name,
+              owner: owner,
             ),
           );
         } else if (response == 0) {
