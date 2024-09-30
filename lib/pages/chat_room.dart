@@ -1,4 +1,5 @@
 import 'package:family_locator/api/firebase_api.dart';
+import 'package:family_locator/pages/search_page.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:flutter_map/flutter_map.dart';
 import '../controller/chat_room_controller.dart';
 import '../models/message_model.dart';
+import 'members.dart';
 
 class ChatRoom extends StatefulWidget {
   final String roomId;
@@ -46,18 +48,79 @@ class ChatRoomState extends State<ChatRoom> {
       owner: widget.owner,
     ));
     final TextEditingController messageController = TextEditingController();
-    return WillPopScope(
-      // This widget captures the back button press
-      onWillPop: () async {
-        if (controller.isNotification.value) return true;
-        bool shouldLeave = await _showExitConfirmationDialog(context);
-        return shouldLeave; // Return true if the user confirms to exit, false otherwise.
+    var userProfileUrl = null;
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (controller.isNotification.value) {
+          controller.isNotification.value = false;
+          return;
+        }
+        Future<bool> b = _showExitConfirmationDialog();
+        if (await b) {
+          Get.off(const SearchPage());
+        }
       },
       child: Scaffold(
         appBar: AppBar(
-          title: ListTile(
-            title: Text(widget.roomName),
-            subtitle: Text(widget.roomId),
+          leadingWidth: AppConstants.width * 0.1,
+          leading: Container(
+            margin: const EdgeInsets.only(left: 10),
+            child: GestureDetector(
+              onTap: () async {
+                if (controller.isNotification.value) {
+                  controller.isNotification.value = false;
+                  return;
+                }
+                Future<bool> b = _showExitConfirmationDialog();
+                if (await b) {
+                  Get.off(const SearchPage());
+                }
+              },
+              child: const Icon(Icons.arrow_back),
+            ),
+          ),
+          centerTitle: true,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 19.0, // Inner circle for the image
+                backgroundImage:
+                    userProfileUrl != null && userProfileUrl.isNotEmpty
+                        ? NetworkImage(userProfileUrl)
+                        : null, // Use network image if available
+                child: userProfileUrl == null || userProfileUrl.isEmpty
+                    ? const Icon(Icons.groups_3_sharp,
+                        size: 30.0) // Default icon
+                    : null,
+              ),
+              const SizedBox(
+                width: 6,
+              ),
+              GestureDetector(
+                onTap: () {
+                  Future.delayed(Duration.zero, () async {
+                    Get.to(() => MembersPage(
+                          initialMembers: controller.membersMap,
+                          isOwner: widget.owner == widget.userId,
+                          isAdmin: false,
+                        ));
+                  });
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.roomName),
+                    Text(
+                      widget.roomId,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           actions: [
             if (widget.owner == widget.userId)
@@ -169,6 +232,7 @@ class ChatRoomState extends State<ChatRoom> {
                                     final userName =
                                         controller.userNames[userId] ??
                                             'Unknown';
+                                    AppConstants.log.e(controller.userNames);
                                     final firstLetter = userName.isNotEmpty
                                         ? userId == DeviceInfo.deviceId
                                             ? "You"
@@ -409,11 +473,10 @@ class ChatRoomState extends State<ChatRoom> {
             ),
             Obx(() {
               if (controller.isNotification.value) {
-                return WillPopScope(
-                  onWillPop: () async {
-                    controller.isNotification.value = false;
-                    return false;
-                  },
+                return PopScope(
+                  canPop: false,
+                  onPopInvoked: (didPop) =>
+                      controller.isNotification.value = false,
                   child: Container(
                     padding: const EdgeInsets.all(
                         12), // Adds padding around the content
@@ -629,37 +692,49 @@ class ChatRoomState extends State<ChatRoom> {
       ),
     );
   }
-}
+
+  List<Map<String, dynamic>> membersMap = [
+    {
+      "GroupName": "YMH",
+      "GroupID": "123",
+      "dp": "url",
+      "createdAt": "date in string"
+    },
+    {'name': 'Alice', 'profileUrl': 'url1', 'isAdmin': false, "isOwner": true},
+    {'name': 'Bob', 'profileUrl': 'url2', 'isAdmin': true},
+  ];
 
 // Helper function to group messages by date
-Map<K, List<T>> groupBy<T, K>(Iterable<T> values, K Function(T) keyFunction) =>
-    Map.fromIterable(
-      values.map(keyFunction).toSet(),
-      value: (date) =>
-          values.where((element) => keyFunction(element) == date).toList(),
-    );
+  Map<K, List<T>> groupBy<T, K>(
+          Iterable<T> values, K Function(T) keyFunction) =>
+      Map.fromIterable(
+        values.map(keyFunction).toSet(),
+        value: (date) =>
+            values.where((element) => keyFunction(element) == date).toList(),
+      );
 
 // Show a confirmation dialog to ask the user before exiting
-Future<bool> _showExitConfirmationDialog(BuildContext context) async {
-  return await Get.dialog(
-        AlertDialog(
-          title: const Text('Confirm Exit'),
-          content: const Text('Are you sure you want to exit group?'),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Get.back(result: false); // Close the dialog, return false
-              },
-            ),
-            TextButton(
-              child: const Text('Confirm'),
-              onPressed: () {
-                Get.back(result: true); // Close the dialog, return true
-              },
-            ),
-          ],
-        ),
-      ) ??
-      false; // Return false if the dialog is dismissed without a choice.
+  Future<bool> _showExitConfirmationDialog() async {
+    return await Get.dialog(
+          AlertDialog(
+            title: const Text('Confirm Exit'),
+            content: const Text('Are you sure you want to exit group?'),
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Get.back(result: false); // Close the dialog, return false
+                },
+              ),
+              TextButton(
+                child: const Text('Confirm'),
+                onPressed: () {
+                  Get.back(result: true); // Close the dialog, return true
+                },
+              ),
+            ],
+          ),
+        ) ??
+        false; // Return false if the dialog is dismissed without a choice.
+  }
 }

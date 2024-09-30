@@ -45,8 +45,8 @@ class RoomDialogController extends GetxController {
             DeviceInfo.deviceId!, roomController.text, nameController.text);
 
         if (response == 1) {
-          String owner = await FirebaseApi.getAdmin(
-              roomController.text, DeviceInfo.deviceId ?? "");
+          String owner = await FirebaseApi.getOwner(
+              roomController.text);
           Get.back();
           Get.snackbar(
             backgroundColor: Colors.green,
@@ -84,8 +84,8 @@ class RoomDialogController extends GetxController {
         final name = await FirebaseApi.getRoomName(roomController.text);
 
         if (response == 1) {
-          String owner = await FirebaseApi.getAdmin(
-              roomController.text, DeviceInfo.deviceId ?? "");
+          String owner = await FirebaseApi.getOwner(
+              roomController.text);
 
           Get.back();
           Get.snackbar(

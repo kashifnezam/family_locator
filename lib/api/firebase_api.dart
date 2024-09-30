@@ -183,7 +183,8 @@ class FirebaseApi {
       List<String> pending =
           await getRoomMembers(roomId, "roomDetail", "pending");
       if (!pending.contains(deviceId)) {
-        modifyDeviceInCollection("roomDetail", roomId, deviceId, "pending", true);
+        modifyDeviceInCollection(
+            "roomDetail", roomId, deviceId, "pending", true);
       } else {
         return -3;
       }
@@ -256,12 +257,21 @@ class FirebaseApi {
 
       // Check if the room document exists
       if (!roomDoc.exists) {
-        AppConstants.log.e("Room Does not exist");
+        AppConstants.log.e("Room does not exist");
+        return [];
+      }
+
+      // Get the document data as a map
+      Map<String, dynamic>? roomData = roomDoc.data() as Map<String, dynamic>?;
+
+      // Check if the room data contains the requested field
+      if (roomData == null || !roomData.containsKey(fieldName)) {
+        AppConstants.log.e("Field '$fieldName' does not exist in the document");
         return [];
       }
 
       // Extract the members list from the room document
-      List<dynamic> members = roomDoc.get(fieldName) ?? [];
+      List<dynamic> members = roomData[fieldName] ?? [];
 
       // Ensure the members list contains strings and return it
       List<String> memberList = members.cast<String>();
@@ -275,32 +285,29 @@ class FirebaseApi {
   }
 
   // Add confirm, pending users
-  static Future<void> modifyDeviceInCollection(
-    String collectionName,
-    String docName,
-    String deviceId,
-    String fieldName,
-    bool shouldAdd) async {
-  try {
-    // Determine the FieldValue operation based on the shouldAdd flag
-    var operation = shouldAdd
-        ? FieldValue.arrayUnion([deviceId])   // Add device ID
-        : FieldValue.arrayRemove([deviceId]); // Remove device ID
+  static Future<void> modifyDeviceInCollection(String collectionName,
+      String docName, String deviceId, String fieldName, bool shouldAdd) async {
+    try {
+      // Determine the FieldValue operation based on the shouldAdd flag
+      var operation = shouldAdd
+          ? FieldValue.arrayUnion([deviceId]) // Add device ID
+          : FieldValue.arrayRemove([deviceId]); // Remove device ID
 
-    // Perform the Firestore update
-    await FirebaseFirestore.instance
-        .collection(collectionName)
-        .doc(docName)
-        .set({
-      fieldName: operation,
-    }, SetOptions(merge: true));
+      // Perform the Firestore update
+      await FirebaseFirestore.instance
+          .collection(collectionName)
+          .doc(docName)
+          .set({
+        fieldName: operation,
+      }, SetOptions(merge: true));
 
-    AppConstants.log.i(
-        shouldAdd ? 'Device ID added successfully' : 'Device ID removed successfully');
-  } catch (e) {
-    AppConstants.log.e('Error modifying device ID: $e');
+      AppConstants.log.i(shouldAdd
+          ? 'Device ID added successfully'
+          : 'Device ID removed successfully');
+    } catch (e) {
+      AppConstants.log.e('Error modifying device ID: $e');
+    }
   }
-}
 
   // get Room Name
   static Future<String> getRoomName(String roomNo) async {
@@ -314,7 +321,7 @@ class FirebaseApi {
   }
 
   // Get Amdin
-  static Future<String> getAdmin(String roomNo, String deviceId) async {
+  static Future<String> getOwner(String roomNo) async {
     DocumentSnapshot roomDoc =
         await _firestore.collection("roomDetail").doc(roomNo).get();
     if (!roomDoc.exists) {

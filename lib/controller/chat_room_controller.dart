@@ -32,7 +32,7 @@ class ChatRoomController extends GetxController {
   DocumentSnapshot? _lastDocument;
   RxList<LatLng> routePoints = <LatLng>[].obs;
   RxList<String> notifCount = <String>[].obs;
-
+  RxList<Map<String, dynamic>> membersMap = <Map<String, dynamic>>[].obs;
   bool _hasMoreMessages = true;
   final mapController = MapController();
   final RxBool isMapReady = false.obs;
@@ -40,7 +40,6 @@ class ChatRoomController extends GetxController {
   final ScrollController scrollController = ScrollController();
   RxBool isAtBottom = true.obs; // Reactive variable to track scroll position
 
-  late StreamSubscription<QuerySnapshot> messagesSubscription;
   late StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
       locationsSubscription;
   late StreamSubscription<List<String>>? notifSubscription;
@@ -55,10 +54,10 @@ class ChatRoomController extends GetxController {
   void onInit() {
     super.onInit();
     fetchMessages(initial: true).then((_) => scrollToBottom());
-    fetchLocations();
+    fetchLocationsAndNotifications();
     scrollController.addListener(_scrollListener);
     listenToMessages(); // Start listening to messages
-    if (owner == DeviceInfo.deviceId) startListeningNotification();
+    // if (owner == DeviceInfo.deviceId) startListeningNotification();
   }
 
   @override
@@ -66,7 +65,7 @@ class ChatRoomController extends GetxController {
     scrollController.removeListener(_scrollListener);
     scrollController.dispose();
     FirebaseApi.userJoinLeft("left", roomId);
-    stopListeningNotification();
+    // stopListeningNotification();
     super.onClose();
   }
 
@@ -191,11 +190,15 @@ class ChatRoomController extends GetxController {
   // Updated method using getRoomMembers to fetch usernames
   Future<void> fetchUserNames(String roomId) async {
     try {
-      // Fetch the list of members using the getRoomMembers method
+      // Fetch the list of members, pending, and admins using the getRoomMembers method
       List<String> members =
           await FirebaseApi.getRoomMembers(roomId, "roomDetail", "members");
       List<String> pending =
           await FirebaseApi.getRoomMembers(roomId, "roomDetail", "pending");
+      List<String> adminList =
+          await FirebaseApi.getRoomMembers(roomId, "roomDetail", "admins");
+
+      // Combine members and pending lists
       List<String> combinedList = [...members, ...pending];
 
       if (combinedList.isEmpty) {
@@ -203,60 +206,90 @@ class ChatRoomController extends GetxController {
         return;
       }
 
-      // Fetch details of each user in the members list
-      var userDocs = await _firestore
+      // Fetch user details for combined members and pending list
+      final userDocs = await _firestore
           .collection('anonymous')
           .where(FieldPath.documentId, whereIn: combinedList)
           .get();
 
       for (var doc in userDocs.docs) {
-        // Store each username in the userNames map
-        userNames[doc.id] = doc.get('usr') ?? 'Unknown';
+        userNames[doc.id] =
+            doc.get('usr') ?? 'Unknown'; // Store usernames in the map
       }
 
       // Log the fetched usernames
       AppConstants.log.i(userNames);
+
+      // Fetch only member details (excluding pending users)
+      final membersDocs = await _firestore
+          .collection('anonymous')
+          .where(FieldPath.documentId, whereIn: members)
+          .get();
+
+      // Add group details (0th index of membersMap)
+      membersMap.add({
+        "GroupName": userNames[owner] ?? 'Unknown Group',
+        "GroupID": owner,
+        "dp": "", // Optional group profile picture URL
+        "createdAt": "", // Replace with actual date
+      });
+
+      // Loop through member documents and build member map
+      for (var doc in membersDocs.docs) {
+        Map<String, dynamic> user = {
+          "id": doc.id,
+          "name": doc.get('usr') ??
+              'Unknown', // Get username or default to 'Unknown'
+          "profileUrl": doc.data().containsKey('dp')
+              ? doc.get('dp')
+              : '', // Check if 'dp' exists
+          "isOwner": doc.id == owner, // Check if the member is the owner
+          "isAdmin": adminList.contains(doc.id), // Check if the member is admin
+        };
+
+        membersMap.add(user);
+      }
     } catch (e) {
       // Handle any errors during the operation
       AppConstants.log.e('Error fetching user names: $e');
     }
   }
 
-  void fetchLocations() {
-    locationsSubscription = _firestore
-        .collection('roomDetail')
-        .doc(roomId)
-        .snapshots()
-        .listen((roomSnapshot) {
-      if (roomSnapshot.exists) {
-        List<String> memberIds =
-            List<String>.from(roomSnapshot.get('members') ?? []);
+  // void fetchLocations() {
+  //   locationsSubscription = _firestore
+  //       .collection('roomDetail')
+  //       .doc(roomId)
+  //       .snapshots()
+  //       .listen((roomSnapshot) {
+  //     if (roomSnapshot.exists) {
+  //       List<String> memberIds =
+  //           List<String>.from(roomSnapshot.get('members') ?? []);
 
-        if (memberIds.isNotEmpty) {
-          _firestore
-              .collection('anonymous')
-              .where(FieldPath.documentId, whereIn: memberIds)
-              .snapshots()
-              .listen((anonymousSnapshot) {
-            for (var doc in anonymousSnapshot.docs) {
-              final userId = doc.id;
-              final currLoc = doc.get('currLoc'); // Get the currLoc string
-              final location =
-                  _parseLocation(currLoc); // Parse the location string
-              if (location != null) {
-                userLocations[userId] = location; // Store the LatLng object
-              }
-            }
-          });
-        } else {
-          userLocations.clear(); // Clear locations if there are no members
-        }
-      } else {
-        AppConstants.log.e('Room not found');
-        userLocations.clear(); // Clear locations if room doesn't exist
-      }
-    });
-  }
+  //       if (memberIds.isNotEmpty) {
+  //         _firestore
+  //             .collection('anonymous')
+  //             .where(FieldPath.documentId, whereIn: memberIds)
+  //             .snapshots()
+  //             .listen((anonymousSnapshot) {
+  //           for (var doc in anonymousSnapshot.docs) {
+  //             final userId = doc.id;
+  //             final currLoc = doc.get('currLoc'); // Get the currLoc string
+  //             final location =
+  //                 _parseLocation(currLoc); // Parse the location string
+  //             if (location != null) {
+  //               userLocations[userId] = location; // Store the LatLng object
+  //             }
+  //           }
+  //         });
+  //       } else {
+  //         userLocations.clear(); // Clear locations if there are no members
+  //       }
+  //     } else {
+  //       AppConstants.log.e('Room not found');
+  //       userLocations.clear(); // Clear locations if room doesn't exist
+  //     }
+  //   });
+  // }
 
   LatLng? _parseLocation(String currLoc) {
     // Example: "LatLng(latitude:28.617113, longitude:77.373625)"
@@ -420,52 +453,56 @@ class ChatRoomController extends GetxController {
     });
   }
 
-  Stream<List<String>> listenToRoomMembers(
-      String roomId, String collectionName, String fieldName) {
-    return FirebaseFirestore.instance
-        .collection(collectionName)
+  void fetchLocationsAndNotifications() {
+    locationsSubscription = _firestore
+        .collection('roomDetail')
         .doc(roomId)
-        .snapshots() // Listen for real-time changes
-        .map((snapshot) {
-      // Check if the document exists
-      if (!snapshot.exists) {
-        AppConstants.log.e("Room does not exist");
-        return <String>[]; // Return an empty list if the room doesn't exist
+        .snapshots()
+        .listen((roomSnapshot) {
+      if (roomSnapshot.exists) {
+        // Fetch members for locations
+        List<String> memberIds =
+            List<String>.from(roomSnapshot.get('members') ?? []);
+
+        // Update user locations based on member IDs
+        if (memberIds.isNotEmpty) {
+          _firestore
+              .collection('anonymous')
+              .where(FieldPath.documentId, whereIn: memberIds)
+              .snapshots()
+              .listen((anonymousSnapshot) {
+            userLocations.clear(); // Clear previous locations
+            for (var doc in anonymousSnapshot.docs) {
+              final userId = doc.id;
+              final currLoc = doc.get('currLoc'); // Get the currLoc string
+              final location =
+                  _parseLocation(currLoc); // Parse the location string
+              if (location != null) {
+                userLocations[userId] = location; // Store the LatLng object
+              }
+            }
+          });
+        } else {
+          userLocations.clear(); // Clear locations if there are no members
+        }
+
+        // Fetch notifications (pending members)
+        if (roomSnapshot.data()!.containsKey('pending')) {
+          List<String> pendingMembers =
+              List<String>.from(roomSnapshot.get('pending') ?? []);
+          AppConstants.log.i('Updated members: $pendingMembers');
+
+          // Clear the existing list before adding new members
+          notifCount.clear();
+
+          // Add the updated pending members list to notifCount
+          notifCount.addAll(pendingMembers);
+        }
+      } else {
+        AppConstants.log.e('Room not found');
+        userLocations.clear(); // Clear locations if room doesn't exist
+        notifCount.clear(); // Clear notifications as well
       }
-
-      // Check if the field exists in the document
-      if (!snapshot.data()!.containsKey(fieldName)) {
-        AppConstants.log.w("Field '$fieldName' does not exist in the document");
-        return <String>[]; // Return an empty list if the field doesn't exist
-      }
-
-      // Extract the specified field and ensure it's a list
-      List<dynamic> members = snapshot.get(fieldName) ?? [];
-
-      // Cast the dynamic list to List<String> and return it
-      return members.cast<String>();
-    }).handleError((error) {
-      // Handle any errors
-      AppConstants.log.e("Error listening to room members: $error");
-      return <String>[]; // Return an empty list on error
     });
-  }
-
-  void startListeningNotification() {
-    notifSubscription =
-        listenToRoomMembers(roomId, 'roomDetail', 'pending').listen((members) {
-      // Handle real-time updates here
-      AppConstants.log.i('Updated members: $members');
-
-      // Clear the existing list before adding new members
-      notifCount.clear();
-
-      // Add the updated members list to notifCount
-      notifCount.addAll(members);
-    });
-  }
-
-  void stopListeningNotification() {
-    notifSubscription?.cancel();
   }
 }
