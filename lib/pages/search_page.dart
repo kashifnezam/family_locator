@@ -6,7 +6,7 @@ import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/utils/offline_data.dart';
 import 'package:family_locator/widgets/button_widget.dart';
 import 'package:family_locator/widgets/username_dialogue.dart';
-import 'package:family_locator/widgets/widget.dart';
+import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -275,7 +275,7 @@ class SearchPageState extends State<SearchPage> {
             ),
 
           // Here is Circle Progress when the location gets load
-          if (isLocPer) WidgetUtil.buildCircularProgressIndicator(),
+          if (isLocPer) CustomWidget.buildCircularProgressIndicator(),
         ],
       ),
     );

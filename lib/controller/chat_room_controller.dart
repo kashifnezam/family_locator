@@ -57,15 +57,13 @@ class ChatRoomController extends GetxController {
     fetchLocationsAndNotifications();
     scrollController.addListener(_scrollListener);
     listenToMessages(); // Start listening to messages
-    // if (owner == DeviceInfo.deviceId) startListeningNotification();
   }
 
   @override
   void onClose() {
     scrollController.removeListener(_scrollListener);
-    scrollController.dispose();
     FirebaseApi.userJoinLeft("left", roomId);
-    // stopListeningNotification();
+    scrollController.dispose();
     super.onClose();
   }
 
@@ -229,9 +227,10 @@ class ChatRoomController extends GetxController {
       // Add group details (0th index of membersMap)
       membersMap.add({
         "GroupName": userNames[owner] ?? 'Unknown Group',
-        "GroupID": owner,
+        "ownerId": owner,
         "dp": "", // Optional group profile picture URL
         "createdAt": "", // Replace with actual date
+        "roomId": roomId,
       });
 
       // Loop through member documents and build member map

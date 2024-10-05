@@ -1,8 +1,11 @@
 import 'package:family_locator/utils/constants.dart';
+import 'package:family_locator/widgets/button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controller/members_controller.dart';
+
+late bool isOwner;
 
 class MembersPage extends StatelessWidget {
   final MembersController controller = Get.put(MembersController());
@@ -10,15 +13,16 @@ class MembersPage extends StatelessWidget {
   MembersPage(
       {super.key,
       required List<Map<String, dynamic>> initialMembers,
-      required bool isOwner,
+      required String user,
       required bool isAdmin}) {
     controller.setMembers(initialMembers); // Set initial members
-    controller.isOwner.value = isOwner;
+    controller.user.value = user;
     controller.isAdmin.value = isAdmin;
   }
 
   @override
   Widget build(BuildContext context) {
+    isOwner = controller.user.value == controller.membersMap[0]['ownerId'];
     return Scaffold(
       appBar: AppBar(title: const Text('Group Members')),
       body: Obx(() {
@@ -26,6 +30,16 @@ class MembersPage extends StatelessWidget {
           children: [
             _buildGroupHeader(),
             Expanded(child: _buildMemberList()),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                onTap: () {
+                  controller.exitGroup();
+                },
+                child: ButtonWidget.elevatedBtn("Exit Group",
+                    borderColor: Colors.red),
+              ),
+            ),
           ],
         );
       }),
@@ -92,7 +106,7 @@ class MembersPage extends StatelessWidget {
                         ? Colors.blue
                         : Colors.grey),
           ),
-          onTap: () => controller.isOwner.value
+          onTap: () => isOwner
               ? !member['isOwner']
                   ? _showOptions(context, index + 1)
                   : null
@@ -110,7 +124,7 @@ class MembersPage extends StatelessWidget {
       builder: (context) {
         return Wrap(
           children: [
-            if (!member['isAdmin'] && controller.isOwner.value) ...[
+            if (!member['isAdmin'] && isOwner) ...[
               ListTile(
                 leading: const Icon(Icons.admin_panel_settings),
                 title: const Text('Set as Admin'),
@@ -120,7 +134,7 @@ class MembersPage extends StatelessWidget {
                 },
               ),
             ],
-            if (controller.isAdmin.value || controller.isOwner.value) ...[
+            if (controller.isAdmin.value || isOwner) ...[
               ListTile(
                 leading: const Icon(Icons.cancel),
                 title: const Text('Discard Admin'),
@@ -130,7 +144,7 @@ class MembersPage extends StatelessWidget {
                 },
               ),
             ],
-            if (controller.isOwner.value) ...[
+            if (isOwner) ...[
               ListTile(
                 leading: const Icon(Icons.delete),
                 title: const Text('Remove Member'),

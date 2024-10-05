@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class ButtonWidget {
-  static Widget elevatedBtn(String btnName) {
+  static Widget elevatedBtn(String btnName, {borderColor = Colors.black}) {
     return Container(
       width: 200, // Adjust width as needed
       height: 60, // Adjust height as needed
       decoration: BoxDecoration(
         border: Border.all(
-          color: Colors.black,
+          color: borderColor,
         ),
         gradient: LinearGradient(
           colors: [Colors.indigo.shade400, Colors.tealAccent.shade700],
@@ -16,10 +16,10 @@ class ButtonWidget {
         ),
         borderRadius: BorderRadius.circular(15),
       ),
-      child: const Center(
+      child: Center(
         child: Text(
-          'Family Room',
-          style: TextStyle(
+          btnName,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.white,

@@ -3,6 +3,7 @@ import 'package:family_locator/models/anonymous_model.dart';
 import 'package:family_locator/models/user_model.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/utils/location_utils.dart';
+import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/message_model.dart';
@@ -330,8 +331,41 @@ class FirebaseApi {
     }
     return roomDoc.get("owner") ?? "";
   }
+
+  static Future<int> exitGroup(String roomNo, String userId) async {
+    AppConstants.log.e("----");
+    try {
+      // Run the update operations in a Firestore transaction to ensure atomicity
+      await _firestore.runTransaction((transaction) async {
+        // Get references to the two documents
+        DocumentReference roomDetailDoc =
+            _firestore.collection("roomDetail").doc(roomNo);
+        DocumentReference anonymousDoc =
+            _firestore.collection("anonymous").doc(userId);
+
+        // Remove the userId from the members list in roomDetail collection
+        transaction.update(roomDetailDoc, {
+          "members": FieldValue.arrayRemove([userId])
+        });
+
+        // Remove the roomNo from the roomIds list in the anonymous collection
+        transaction.update(anonymousDoc, {
+          "roomIds": FieldValue.arrayRemove([roomNo])
+        });
+      });
+
+      // Optional: Print success message
+      AppConstants.log.i(
+          "Successfully removed userId from room members and roomNo from user rooms.");
+      return 0;
+    } catch (e) {
+      // Handle the error
+      AppConstants.log.e("Error removing user from group: $e");
+      CustomWidget.confirmDialogue(
+          title: "Error",
+          content: "Error removing user from group: $e",
+          isCancel: false);
+      return 1;
+    }
+  }
 }
-
-
-// addDeviceToCollection("anonymous", deviceID, roomId, "roomId");
-//       addDeviceToCollection("roomDetail", roomId, deviceId, "roomId");

@@ -2,6 +2,7 @@ import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/pages/search_page.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
+import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
@@ -56,7 +57,9 @@ class ChatRoomState extends State<ChatRoom> {
           controller.isNotification.value = false;
           return;
         }
-        Future<bool> b = _showExitConfirmationDialog();
+        Future<bool> b = CustomWidget.confirmDialogue(
+            content: "Are you sure you want to exit group?",
+            title: "Confirm Exit");
         if (await b) {
           Get.off(const SearchPage());
         }
@@ -72,7 +75,9 @@ class ChatRoomState extends State<ChatRoom> {
                   controller.isNotification.value = false;
                   return;
                 }
-                Future<bool> b = _showExitConfirmationDialog();
+                Future<bool> b = CustomWidget.confirmDialogue(
+                    content: "Are you sure you want to exit group?",
+                    title: "Confirm Exit");
                 if (await b) {
                   Get.off(const SearchPage());
                 }
@@ -100,13 +105,11 @@ class ChatRoomState extends State<ChatRoom> {
               ),
               GestureDetector(
                 onTap: () {
-                  Future.delayed(Duration.zero, () async {
-                    Get.to(() => MembersPage(
-                          initialMembers: controller.membersMap,
-                          isOwner: widget.owner == widget.userId,
-                          isAdmin: false,
-                        ));
-                  });
+                  Get.to(() => MembersPage(
+                        initialMembers: controller.membersMap,
+                        user: widget.userId,
+                        isAdmin: false,
+                      ));
                 },
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -714,27 +717,4 @@ class ChatRoomState extends State<ChatRoom> {
       );
 
 // Show a confirmation dialog to ask the user before exiting
-  Future<bool> _showExitConfirmationDialog() async {
-    return await Get.dialog(
-          AlertDialog(
-            title: const Text('Confirm Exit'),
-            content: const Text('Are you sure you want to exit group?'),
-            actions: [
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () {
-                  Get.back(result: false); // Close the dialog, return false
-                },
-              ),
-              TextButton(
-                child: const Text('Confirm'),
-                onPressed: () {
-                  Get.back(result: true); // Close the dialog, return true
-                },
-              ),
-            ],
-          ),
-        ) ??
-        false; // Return false if the dialog is dismissed without a choice.
-  }
 }
