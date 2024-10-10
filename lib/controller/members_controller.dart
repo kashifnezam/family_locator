@@ -41,7 +41,7 @@ class MembersController extends GetxController {
     FirebaseApi.exitGroup(membersMap[0]['roomId'], user.value).then(
       (value) {
         if (value == 0) {
-          Get.to(() => const SearchPage());
+          Get.off(() =>  SearchPage());
           CustomWidget.confirmDialogue(
             title: "Exited Successfully",
             content:

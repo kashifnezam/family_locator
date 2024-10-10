@@ -3,12 +3,6 @@ import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // if (kIsWeb) {
-  //   runApp(WebApp());
-  // } else {
-  //   await dotenv.load(fileName: ".env");
-  //    runApp(MyApp());
-  // }
   runApp(const MyApp());
 }
 

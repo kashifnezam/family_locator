@@ -42,27 +42,20 @@ class SearchPageState extends State<SearchPage> {
   @override
   initState() {
     super.initState();
+
     _searchController.addListener(_onSearchChanged);
-    setState(() {
-      isLocPer = true;
-    });
+    isLocPer = false;
 
     LocationUtils.getCurrentLocation(
       onLocationLoaded: (location) {
-        setState(() {
-          _currentLocation = location;
-          _center = location;
-          _zoom = 15;
-          setState(() {
-            isLocPer = false;
-          });
-        });
+        _currentLocation = location;
+        _center = location;
+        _zoom = 15;
+        isLocPer = false;
       },
       onError: (error) {
         AppConstants.log.e("Error getting location: $error");
-        setState(() {
-          isLocPer = false;
-        });
+        isLocPer = false;
       },
       onStartMoving: () {
         AppConstants.log.i("Person Starts Moving");
@@ -82,43 +75,31 @@ class SearchPageState extends State<SearchPage> {
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
-
   void _onSearchChanged() {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 1500), () {
       if (_searchController.text != _searchText) {
-        setState(() {
-          _searchText = _searchController.text;
-          _searchLocations(_searchText);
-        });
+        _searchText = _searchController.text;
+        _searchLocations(_searchText);
       }
     });
   }
 
   Future<void> _searchLocations(String query) async {
     if (query.isEmpty || query.length < 4) {
-      setState(() => _searchResults = []);
+      _searchResults = [];
       return;
     }
 
-    setState(() => _isSearchLoading = true);
+    _isSearchLoading = true;
 
     try {
       List<dynamic> results = await searchPlace(query);
-      setState(() {
-        _searchResults = results;
-        _isSearchLoading = false;
-      });
+      _searchResults = results;
+      _isSearchLoading = false;
     } catch (e) {
       AppConstants.log.e("Error searching locations: $e");
-      setState(() => _isSearchLoading = false);
+      _isSearchLoading = false;
       Get.defaultDialog(
         title: "Failed to search locations",
         onConfirm: () {

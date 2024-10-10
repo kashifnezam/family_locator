@@ -43,7 +43,6 @@ class ChatRoomController extends GetxController {
   late StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
       locationsSubscription;
   late StreamSubscription<List<String>>? notifSubscription;
-
   ChatRoomController(
       {required this.roomId,
       required this.userId,
@@ -57,14 +56,6 @@ class ChatRoomController extends GetxController {
     fetchLocationsAndNotifications();
     scrollController.addListener(_scrollListener);
     listenToMessages(); // Start listening to messages
-  }
-
-  @override
-  void onClose() {
-    scrollController.removeListener(_scrollListener);
-    FirebaseApi.userJoinLeft("left", roomId);
-    scrollController.dispose();
-    super.onClose();
   }
 
   void _scrollListener() {

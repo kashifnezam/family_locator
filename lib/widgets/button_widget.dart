@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class ButtonWidget {
-  static Widget elevatedBtn(String btnName, {borderColor = Colors.black}) {
+  static Widget elevatedBtn(String btnName, {borderColor = Colors.black, double height = 60, double width = 200}) {
     return Container(
-      width: 200, // Adjust width as needed
-      height: 60, // Adjust height as needed
+      width: width, // Adjust width as needed
+      height: height, // Adjust height as needed
       decoration: BoxDecoration(
         border: Border.all(
           color: borderColor,

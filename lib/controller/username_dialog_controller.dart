@@ -50,10 +50,4 @@ class UsernameDialogController extends GetxController {
       }
     }
   }
-
-  @override
-  void onClose() {
-    usernameController.dispose();
-    super.onClose();
-  }
 }

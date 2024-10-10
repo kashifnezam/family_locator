@@ -1,5 +1,4 @@
 import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/pages/search_page.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
@@ -11,6 +10,7 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:flutter_map/flutter_map.dart';
 import '../controller/chat_room_controller.dart';
 import '../models/message_model.dart';
+import 'home.dart';
 import 'members.dart';
 
 class ChatRoom extends StatefulWidget {
@@ -32,14 +32,6 @@ class ChatRoom extends StatefulWidget {
 }
 
 class ChatRoomState extends State<ChatRoom> {
-  final TextEditingController _messageController = TextEditingController();
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final ChatRoomController controller = Get.put(ChatRoomController(
@@ -61,7 +53,7 @@ class ChatRoomState extends State<ChatRoom> {
             content: "Are you sure you want to exit group?",
             title: "Confirm Exit");
         if (await b) {
-          Get.off(const SearchPage());
+          Get.offAll(Home());
         }
       },
       child: Scaffold(
@@ -79,51 +71,54 @@ class ChatRoomState extends State<ChatRoom> {
                     content: "Are you sure you want to exit group?",
                     title: "Confirm Exit");
                 if (await b) {
-                  Get.off(const SearchPage());
+                  Get.offAll(Home());
                 }
               },
               child: const Icon(Icons.arrow_back),
             ),
           ),
           centerTitle: true,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 19.0, // Inner circle for the image
-                backgroundImage:
-                    userProfileUrl != null && userProfileUrl.isNotEmpty
-                        ? NetworkImage(userProfileUrl)
-                        : null, // Use network image if available
-                child: userProfileUrl == null || userProfileUrl.isEmpty
-                    ? const Icon(Icons.groups_3_sharp,
-                        size: 30.0) // Default icon
-                    : null,
-              ),
-              const SizedBox(
-                width: 6,
-              ),
-              GestureDetector(
-                onTap: () {
-                  Get.to(() => MembersPage(
-                        initialMembers: controller.membersMap,
-                        user: widget.userId,
-                        isAdmin: false,
-                      ));
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.roomName),
-                    Text(
-                      widget.roomId,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ],
+          title: Hero(
+            tag: "tag${widget.roomId}",
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 19.0, // Inner circle for the image
+                  backgroundImage:
+                      userProfileUrl != null && userProfileUrl.isNotEmpty
+                          ? NetworkImage(userProfileUrl)
+                          : null, // Use network image if available
+                  child: userProfileUrl == null || userProfileUrl.isEmpty
+                      ? const Icon(Icons.groups_3_sharp,
+                          size: 30.0) // Default icon
+                      : null,
                 ),
-              ),
-            ],
+                const SizedBox(
+                  width: 6,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Get.to(() => MembersPage(
+                          initialMembers: controller.membersMap,
+                          user: widget.userId,
+                          isAdmin: false,
+                        ));
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.roomName),
+                      Text(
+                        widget.roomId,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             if (widget.owner == widget.userId)
@@ -235,7 +230,6 @@ class ChatRoomState extends State<ChatRoom> {
                                     final userName =
                                         controller.userNames[userId] ??
                                             'Unknown';
-                                    AppConstants.log.e(controller.userNames);
                                     final firstLetter = userName.isNotEmpty
                                         ? userId == DeviceInfo.deviceId
                                             ? "You"
@@ -371,17 +365,30 @@ class ChatRoomState extends State<ChatRoom> {
                                             DateFormat('HH:mm').format(
                                                 message.timestamp.toDate());
 
+                                        // Generate a unique tag for each message, e.g., using the message's ID or timestamp
+                                        final uniqueTag =
+                                            'tagId${message.timestamp.millisecondsSinceEpoch}';
+
                                         // Check if the message is a system message
                                         if (message.sender == "System") {
-                                          return _buildSystemMessageBubble(
-                                              context, message.text);
+                                          return Hero(
+                                            tag:
+                                                uniqueTag, // Use the unique tag here
+                                            child: _buildSystemMessageBubble(
+                                                context, message.text),
+                                          );
                                         } else {
-                                          return _buildMessageBubble(
+                                          return Hero(
+                                            tag:
+                                                uniqueTag, // Use the unique tag here
+                                            child: _buildMessageBubble(
                                               context,
                                               isMe,
                                               senderName,
                                               message.text,
-                                              formattedTime);
+                                              formattedTime,
+                                            ),
+                                          );
                                         }
                                       },
                                       childCount: messagesForDate.length,
@@ -514,71 +521,75 @@ class ChatRoomState extends State<ChatRoom> {
                                 .notifCount.length, // Number of notifications
                             itemBuilder: (context, index) {
                               var id = controller.notifCount[index];
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: Colors.amberAccent.shade100,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        controller.userNames[id] ??
-                                            id, // Notification content
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
+                              return Hero(
+                                tag: 'tagId$index',
+                                child: Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12, horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amberAccent.shade100,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          controller.userNames[id] ??
+                                              id, // Notification content
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          onPressed: () {
-                                            FirebaseApi
-                                                .modifyDeviceInCollection(
-                                                    "roomDetail",
-                                                    widget.roomId,
-                                                    id,
-                                                    "members",
-                                                    true);
-                                            FirebaseApi
-                                                .modifyDeviceInCollection(
-                                                    "roomDetail",
-                                                    widget.roomId,
-                                                    id,
-                                                    "pending",
-                                                    false);
-                                          },
-                                          icon: const Icon(
-                                            Icons.check,
-                                            color: Colors.greenAccent,
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            onPressed: () {
+                                              FirebaseApi
+                                                  .modifyDeviceInCollection(
+                                                      "roomDetail",
+                                                      widget.roomId,
+                                                      id,
+                                                      "members",
+                                                      true);
+                                              FirebaseApi
+                                                  .modifyDeviceInCollection(
+                                                      "roomDetail",
+                                                      widget.roomId,
+                                                      id,
+                                                      "pending",
+                                                      false);
+                                            },
+                                            icon: const Icon(
+                                              Icons.check,
+                                              color: Colors.greenAccent,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        IconButton(
-                                          onPressed: () {
-                                            FirebaseApi
-                                                .modifyDeviceInCollection(
-                                                    "roomDetail",
-                                                    widget.roomId,
-                                                    id,
-                                                    "pending",
-                                                    false);
-                                          },
-                                          icon: const Icon(
-                                            Icons.close,
-                                            color: Colors.redAccent,
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            onPressed: () {
+                                              FirebaseApi
+                                                  .modifyDeviceInCollection(
+                                                      "roomDetail",
+                                                      widget.roomId,
+                                                      id,
+                                                      "pending",
+                                                      false);
+                                            },
+                                            icon: const Icon(
+                                              Icons.close,
+                                              color: Colors.redAccent,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },

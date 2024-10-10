@@ -54,7 +54,7 @@ class RoomDialogController extends GetxController {
             snackPosition: SnackPosition.TOP,
           );
 
-          Get.to(
+          Get.off(
             () => ChatRoom(
               roomId: roomController.text,
               userId: DeviceInfo.deviceId.toString(),
@@ -94,7 +94,7 @@ class RoomDialogController extends GetxController {
           );
 
           FirebaseApi.userJoinLeft("joined", roomController.text);
-          Get.to(
+          Get.off(
             () => ChatRoom(
               roomId: roomController.text,
               userId: DeviceInfo.deviceId.toString(),
@@ -143,12 +143,5 @@ class RoomDialogController extends GetxController {
       // Stop loading
       isLoading.value = false;
     }
-  }
-
-  @override
-  void onClose() {
-    nameController.dispose();
-    roomController.dispose();
-    super.onClose();
   }
 }
