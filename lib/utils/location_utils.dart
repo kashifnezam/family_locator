@@ -127,4 +127,17 @@ class LocationUtils {
 
     return deviceId;
   }
+
+  static LatLng? parseLocation(String currLoc) {
+    // Example: "LatLng(latitude:28.617113, longitude:77.373625)"
+    final regex =
+        RegExp(r'LatLng\(latitude:(-?\d+\.\d+), longitude:(-?\d+\.\d+)\)');
+    final match = regex.firstMatch(currLoc);
+    if (match != null) {
+      final latitude = double.parse(match.group(1)!);
+      final longitude = double.parse(match.group(2)!);
+      return LatLng(latitude, longitude);
+    }
+    return null; // Return null if parsing fails
+  }
 }

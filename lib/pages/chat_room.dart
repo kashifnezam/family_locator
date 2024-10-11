@@ -53,7 +53,7 @@ class ChatRoomState extends State<ChatRoom> {
             content: "Are you sure you want to exit group?",
             title: "Confirm Exit");
         if (await b) {
-          Get.offAll(Home());
+          Get.offAll(() => Home());
         }
       },
       child: Scaffold(
@@ -71,7 +71,7 @@ class ChatRoomState extends State<ChatRoom> {
                     content: "Are you sure you want to exit group?",
                     title: "Confirm Exit");
                 if (await b) {
-                  Get.offAll(Home());
+                  Get.offAll(() => Home());
                 }
               },
               child: const Icon(Icons.arrow_back),
@@ -99,7 +99,7 @@ class ChatRoomState extends State<ChatRoom> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    Get.to(() => MembersPage(
+                    Get.off(() => MembersPage(
                           initialMembers: controller.membersMap,
                           user: widget.userId,
                           isAdmin: false,

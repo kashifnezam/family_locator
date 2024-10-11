@@ -1,8 +1,11 @@
+import 'package:family_locator/controller/home_controller.dart';
 import 'package:family_locator/utils/constants.dart';
+import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
-
+import '../utils/device_info.dart';
 import '../utils/offline_data.dart';
 import '../widgets/button_widget.dart';
 import '../widgets/username_dialogue.dart';
@@ -16,6 +19,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final HomeController controller = Get.put(HomeController());
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,119 +171,121 @@ class _HomeState extends State<Home> {
           ),
         ),
       ),
-      body: FlutterMap(
-        // mapController: controller.mapController,
-        options: MapOptions(
-          // cameraConstraint: CameraConstraint.contain(
-          //     bounds: MapConstants.maxBounds),
-          minZoom: 0.2,
-          backgroundColor: Colors.blue.shade100,
-          // onMapReady: controller.onMapCreated,
-          // initialZoom: controller.zoomLevel.value,
-          // initialCameraFit: CameraFit.bounds(
-          //   bounds: controller.userLocationBounds ??
-          //       MapConstants.indiaBounds,
-          // padding: const EdgeInsets.all(30),
-          // ),
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      body: Obx(
+        () => FlutterMap(
+          // mapController: controller.mapController,
+          options: MapOptions(
+            // cameraConstraint: CameraConstraint.contain(
+            //     bounds: MapConstants.maxBounds),
+            minZoom: 0.2,
+            backgroundColor: Colors.blue.shade100,
+            // onMapReady: controller.onMapCreated,
+            // initialZoom: controller.zoomLevel.value,
+            initialCameraFit: CameraFit.bounds(
+              bounds: controller.userLocationBounds ?? MapConstants.indiaBounds,
+              padding: const EdgeInsets.all(30),
+            ),
           ),
-          // PolylineLayer(
-          //   polylines: [
-          //     Polyline(
-          //       points:
-          //           controller.userLocations.values.toList(),
-          //       strokeWidth: 1.0,
-          //       color: Colors.grey,
-          //     ),
-          //     Polyline(
-          //       points: controller.routePoints,
-          //       strokeWidth: 4.0,
-          //       color: Colors.blue,
-          //     ),
-          //   ],
-          // ),
-          // MarkerClusterLayerWidget(
-          //   options: MarkerClusterLayerOptions(
-          //     maxClusterRadius: 45,
-          //     size: const Size(40, 40),
-          //     alignment: Alignment.center,
-          //     padding: const EdgeInsets.all(50),
-          //     maxZoom: 15,
-          //     markers: [
-          //       ...controller.userLocations.entries
-          //           .map((entry) {
-          //         final userId = entry.key;
-          //         final location = entry.value;
-          //         final userName =
-          //             controller.userNames[userId] ??
-          //                 'Unknown';
-          //         final firstLetter = userName.isNotEmpty
-          //             ? userId == DeviceInfo.deviceId
-          //                 ? "You"
-          //                 : userName[0].toUpperCase()
-          //             : '?';
-          //         return Marker(
-          //           point: location,
-          //           width: 40,
-          //           height: 40,
-          //           child: GestureDetector(
-          //             onTap: () =>
-          //                 controller.selectLocation(location),
-          //             onDoubleTap: () =>
-          //                 controller.selectLocation(null),
-          //             child: Tooltip(
-          //               message: userName,
-          //               child: Container(
-          //                 decoration: BoxDecoration(
-          //                   border: Border.all(
-          //                       color: Colors.blue),
-          //                   color:
-          //                       userId == DeviceInfo.deviceId
-          //                           ? Colors.blueGrey
-          //                           : Colors.white,
-          //                   shape: BoxShape.circle,
-          //                 ),
-          //                 child: Center(
-          //                   child: Text(
-          //                     firstLetter,
-          //                     style: TextStyle(
-          //                       color: userId ==
-          //                               DeviceInfo.deviceId
-          //                           ? Colors.white
-          //                           : Colors.green,
-          //                       fontWeight: FontWeight.bold,
-          //                       fontSize: 12,
-          //                     ),
-          //                   ),
-          //                 ),
-          //               ),
-          //             ),
-          //           ),
-          //         );
-          //       }),
-          //     ],
-          //     builder: (context, markers) {
-          //       return Container(
-          //         decoration: BoxDecoration(
-          //             border:
-          //                 Border.all(color: Colors.blueGrey),
-          //             borderRadius: BorderRadius.circular(20),
-          //             color: Colors.blue),
-          //         child: Center(
-          //           child: Text(
-          //             markers.length.toString(),
-          //             style: const TextStyle(
-          //                 color: Colors.white),
-          //           ),
-          //         ),
-          //       );
-          //     },
-          //   ),
-          // ),
-        ],
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            ),
+            // PolylineLayer(
+            //   polylines: [
+            //     Polyline(
+            //       points:
+            //           controller.userLocations.values.toList(),
+            //       strokeWidth: 1.0,
+            //       color: Colors.grey,
+            //     ),
+            //     Polyline(
+            //       points: controller.routePoints,
+            //       strokeWidth: 4.0,
+            //       color: Colors.blue,
+            //     ),
+            //   ],
+            // ),
+            Obx(
+              () {
+                return MarkerClusterLayerWidget(
+                  options: MarkerClusterLayerOptions(
+                    inside: true,
+                    centerMarkerOnClick: true,
+                    maxClusterRadius: 45,
+                    size: const Size(40, 40),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(50),
+                    maxZoom: 15,
+                    markers: [
+                      ...controller.userLocations.entries.map((entry) {
+                        final userId = entry.key;
+                        final location = entry.value;
+                        final userName =
+                            controller.userNames[userId] ?? 'Unknown';
+                        final firstLetter = userName.isNotEmpty
+                            ? userId == DeviceInfo.deviceId
+                                ? "You"
+                                : userName[0].toUpperCase()
+                            : '?';
+                        return Marker(
+                          point: location,
+                          width: 40,
+                          height: 40,
+                          child: GestureDetector(
+                            onTap: () {
+                              CustomWidget.confirmDialogue(
+                                  title: "User Info",
+                                  content: "Name: $userName",
+                                  isCancel: false);
+                            },
+                            child: Tooltip(
+                              message: userName,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.blue),
+                                  color: userId == DeviceInfo.deviceId
+                                      ? Colors.blueGrey
+                                      : Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    firstLetter,
+                                    style: TextStyle(
+                                      color: userId == DeviceInfo.deviceId
+                                          ? Colors.white
+                                          : Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                    builder: (context, markers) {
+                      return Container(
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blueGrey),
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.blue),
+                        child: Center(
+                          child: Text(
+                            markers.length.toString(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            )
+          ],
+        ),
       ),
     );
   }
