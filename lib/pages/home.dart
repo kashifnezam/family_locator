@@ -1,4 +1,5 @@
 import 'package:family_locator/controller/home_controller.dart';
+import 'package:family_locator/pages/family_room.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
@@ -6,10 +7,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
 import '../utils/device_info.dart';
-import '../utils/offline_data.dart';
 import '../widgets/button_widget.dart';
-import '../widgets/username_dialogue.dart';
-import 'room_dialogue.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -24,27 +22,21 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: IconThemeData(
+          color: Colors.white, // Change the color of the back arrow
+        ),
         backgroundColor: Colors.blueGrey,
         title: GestureDetector(
-          onTap: () async {
-            String? usr = await OfflineData.getData("usr");
-            if (usr != null) {
-              String? dateString = await OfflineData.getData("date");
-              if (dateString != null) {
-                DateTime date = DateTime.parse(dateString);
-                if (DateTime.now().isAfter(date.add(const Duration(days: 7)))) {
-                  usr = null;
-                }
-              }
-            }
-            usr != null
-                ? Get.dialog(RoomDialog())
-                : Get.dialog(UsernameDialog());
-          },
+          onTap: () => Get.to(() => FamilyRoom()),
           child: ButtonWidget.elevatedBtn("Family Room",
               height: AppConstants.height * 0.05),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+              onPressed: () => controller.fitMapToBounds(),
+              icon: Icon(Icons.reset_tv_rounded))
+        ],
       ),
       drawer: Drawer(
         child: Container(
@@ -173,10 +165,10 @@ class _HomeState extends State<Home> {
       ),
       body: Obx(
         () => FlutterMap(
-          // mapController: controller.mapController,
+          mapController: controller.mapController,
           options: MapOptions(
-            // cameraConstraint: CameraConstraint.contain(
-            //     bounds: MapConstants.maxBounds),
+            // cameraConstraint:
+            //     CameraConstraint.contain(bounds: MapConstants.maxBounds),
             minZoom: 0.2,
             backgroundColor: Colors.blue.shade100,
             // onMapReady: controller.onMapCreated,
@@ -220,12 +212,12 @@ class _HomeState extends State<Home> {
                       ...controller.userLocations.entries.map((entry) {
                         final userId = entry.key;
                         final location = entry.value;
-                        final userName =
-                            controller.userNames[userId] ?? 'Unknown';
-                        final firstLetter = userName.isNotEmpty
+                        final List<String> usr =
+                            controller.userDetails[userId] ?? [];
+                        final firstLetter = usr[0].isNotEmpty
                             ? userId == DeviceInfo.deviceId
                                 ? "You"
-                                : userName[0].toUpperCase()
+                                : usr[0][0].toUpperCase()
                             : '?';
                         return Marker(
                           point: location,
@@ -235,11 +227,12 @@ class _HomeState extends State<Home> {
                             onTap: () {
                               CustomWidget.confirmDialogue(
                                   title: "User Info",
-                                  content: "Name: $userName",
+                                  content:
+                                      "Name: ${usr[0]} \nGroup in common: ${usr.skip(1).join(', ')}",
                                   isCancel: false);
                             },
                             child: Tooltip(
-                              message: userName,
+                              message: usr[0],
                               child: Container(
                                 decoration: BoxDecoration(
                                   border: Border.all(color: Colors.blue),
@@ -283,7 +276,7 @@ class _HomeState extends State<Home> {
                   ),
                 );
               },
-            )
+            ),
           ],
         ),
       ),

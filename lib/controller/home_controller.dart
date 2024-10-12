@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/utils/location_utils.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
@@ -12,7 +13,9 @@ class HomeController extends GetxController {
 
   // This field stores the userId(DeviceId) as key and location as values
   RxMap<String, LatLng> userLocations = <String, LatLng>{}.obs;
-  RxMap<String, String> userNames = <String, String>{}.obs;
+  RxMap<String, List<String>> userDetails = <String, List<String>>{}.obs;
+  List<String> roomIds = [];
+  final mapController = MapController();
 
   @override
   void onInit() {
@@ -32,17 +35,20 @@ class HomeController extends GetxController {
           .listen((roomSnapshot) {
         userLocations.clear(); // Clear previous locations
         for (var doc in roomSnapshot.docs) {
+          List<String> usr = [];
+          usr.add(doc.get('usr'));
+          if (doc.data().containsKey("roomId")) {
+            usr.addAll(getCommonGroup(doc.get('roomId').cast<String>()));
+          }
           final userId = doc.id;
-          final usr = doc.get('usr');
+
           final currLoc = doc.get('currLoc'); // Get the currLoc string
           final location =
               LocationUtils.parseLocation(currLoc); // Parse the location string
           if (location != null) {
             userLocations[userId] = location; // Store the LatLng object
           }
-          if (usr != null) {
-            userNames[userId] = usr;
-          }
+          userDetails[userId] = usr;
         }
       });
     } else {
@@ -53,7 +59,7 @@ class HomeController extends GetxController {
 //  Get All Members from all Rooms (only those room in which user is the member).
   Future<List<String>> getAllMembersInRooms() async {
     // Step 1: Get the roomIds from the "anonymous" collection
-    List<String> roomIds = (await _firestore
+    roomIds = (await _firestore
             .collection("anonymous")
             .doc(DeviceInfo.deviceId)
             .get())
@@ -82,10 +88,25 @@ class HomeController extends GetxController {
     return allMembers.toList();
   }
 
-   // to get the bounds of all users location
+  // to get the bounds of all users location
   LatLngBounds? get userLocationBounds {
     if (userLocations.isEmpty || userLocations.length < 2) return null;
     final points = userLocations.values.toList();
     return LatLngBounds.fromPoints(points);
+  }
+
+  // Common Group extraction
+  List<String> getCommonGroup(List<String> group) {
+    // Find the intersection with the second list
+    return Set<String>.from(group)
+        .intersection(Set<String>.from(roomIds))
+        .toList();
+  }
+
+  void fitMapToBounds() {
+    final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
+    mapController.fitCamera(CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 0)));
   }
 }
