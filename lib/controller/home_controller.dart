@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/utils/location_utils.dart';
 import 'package:flutter/material.dart';
@@ -58,30 +59,17 @@ class HomeController extends GetxController {
 
 //  Get All Members from all Rooms (only those room in which user is the member).
   Future<List<String>> getAllMembersInRooms() async {
-    // Step 1: Get the roomIds from the "anonymous" collection
-    roomIds = (await _firestore
-            .collection("anonymous")
-            .doc(DeviceInfo.deviceId)
-            .get())
-        .get("roomId")
-        .cast<String>(); // Cast to List<String> if necessary
+    roomIds = await FirebaseApi.getRoomMembers(
+        DeviceInfo.deviceId!, "anonymous", "roomId");
 
     // Step 2: Create a set to store all unique member IDs (to avoid duplicates)
     Set<String> allMembers = {};
 
     // Step 3: Loop through each roomId and query the roomDetail collection
     for (String roomId in roomIds) {
-      DocumentSnapshot roomSnapshot =
-          await _firestore.collection("roomDetail").doc(roomId).get();
-
-      if (roomSnapshot.exists) {
-        // Step 4: Get the members field (assuming it's a List of Strings)
-        List<String> members =
-            List<String>.from(roomSnapshot.get("members") ?? []);
-
-        // Step 5: Add all members to the set (ensures no duplicates)
-        allMembers.addAll(members);
-      }
+      List<String> members =
+          await FirebaseApi.getRoomMembers(roomId, "roomDetail", "members");
+      allMembers.addAll(members);
     }
 
     // Step 6: Convert the set to a list and return it
@@ -95,6 +83,15 @@ class HomeController extends GetxController {
     return LatLngBounds.fromPoints(points);
   }
 
+// This method is used to zoom in the location when tab on user location on map
+  void selectLocation(LatLng? location) {
+    if (location != null) {
+      mapController.move(location, 16.0);
+    } else {
+      fitMapToBounds();
+    }
+  }
+
   // Common Group extraction
   List<String> getCommonGroup(List<String> group) {
     // Find the intersection with the second list
@@ -104,9 +101,11 @@ class HomeController extends GetxController {
   }
 
   void fitMapToBounds() {
-    final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
-    mapController.fitCamera(CameraFit.bounds(
-        bounds: bounds,
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 0)));
+    if (userLocations.isNotEmpty) {
+      final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
+      mapController.fitCamera(CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 0)));
+    }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:family_locator/controller/family_room_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,6 +16,8 @@ class FamilyRoom extends StatefulWidget {
 }
 
 class _FamilyRoomState extends State<FamilyRoom> {
+  FamilyRoomController controller = Get.put(FamilyRoomController());
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

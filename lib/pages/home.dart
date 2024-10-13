@@ -224,6 +224,8 @@ class _HomeState extends State<Home> {
                           width: 40,
                           height: 40,
                           child: GestureDetector(
+                            onDoubleTap: () =>
+                                controller.selectLocation(location),
                             onTap: () {
                               CustomWidget.confirmDialogue(
                                   title: "User Info",

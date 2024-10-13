@@ -333,7 +333,6 @@ class FirebaseApi {
   }
 
   static Future<int> exitGroup(String roomNo, String userId) async {
-    AppConstants.log.e("----");
     try {
       // Run the update operations in a Firestore transaction to ensure atomicity
       await _firestore.runTransaction((transaction) async {
@@ -350,7 +349,7 @@ class FirebaseApi {
 
         // Remove the roomNo from the roomIds list in the anonymous collection
         transaction.update(anonymousDoc, {
-          "roomIds": FieldValue.arrayRemove([roomNo])
+          "roomId": FieldValue.arrayRemove([roomNo])
         });
       });
 

@@ -99,7 +99,7 @@ class ChatRoomState extends State<ChatRoom> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    Get.off(() => MembersPage(
+                    Get.to(() => MembersPage(
                           initialMembers: controller.membersMap,
                           user: widget.userId,
                           isAdmin: false,
@@ -485,7 +485,7 @@ class ChatRoomState extends State<ChatRoom> {
               if (controller.isNotification.value) {
                 return PopScope(
                   canPop: false,
-                  onPopInvoked: (didPop) =>
+                  onPopInvokedWithResult: (didPop, result) =>
                       controller.isNotification.value = false,
                   child: Container(
                     padding: const EdgeInsets.all(
@@ -564,6 +564,13 @@ class ChatRoomState extends State<ChatRoom> {
                                                       id,
                                                       "pending",
                                                       false);
+                                              FirebaseApi
+                                                  .modifyDeviceInCollection(
+                                                      "anonymous",
+                                                      id,
+                                                      widget.roomId,
+                                                      "roomId",
+                                                      true);
                                             },
                                             icon: const Icon(
                                               Icons.check,
