@@ -11,7 +11,7 @@ import '../utils/device_info.dart';
 class FamilyRoomController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  RxList<Map> roomList = <Map>[].obs;
+  RxList<Map<dynamic, dynamic>> roomList = <Map<dynamic, dynamic>>[].obs;
   @override
   void onInit() {
     super.onInit();
@@ -28,15 +28,16 @@ class FamilyRoomController extends GetxController {
       for (String roomNo in roomIds) {
         DocumentSnapshot<Map<String, dynamic>> roomDoc =
             await _firestore.collection("roomDetail").doc(roomNo).get();
-        Map<String, dynamic> field = {};
+        Map<String, String> field = {};
         if (roomDoc.exists) {
           field["roomNo"] = roomNo;
-          field["name"] = roomDoc.data()!.containsKey("name")
-              ? roomDoc.get("name")
+          field["name"] = roomDoc.data()!.containsKey("roomName")
+              ? roomDoc.get("roomName")
               : "Unknown";
           field["dp"] = roomDoc.data()!.containsKey("dp")
               ? roomDoc.get("dp")
               : "https://bit.ly/4dQVSet";
+          field["owner"] = roomDoc.get("owner");
         }
         roomList.add(field);
       }
