@@ -10,6 +10,7 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:flutter_map/flutter_map.dart';
 import '../controller/chat_room_controller.dart';
 import '../models/message_model.dart';
+import 'family_room.dart';
 import 'home.dart';
 import 'members.dart';
 
@@ -43,40 +44,15 @@ class ChatRoomState extends State<ChatRoom> {
     final TextEditingController messageController = TextEditingController();
     var userProfileUrl = null;
     return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) async {
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) async {
         if (controller.isNotification.value) {
           controller.isNotification.value = false;
           return;
         }
-        Future<bool> b = CustomWidget.confirmDialogue(
-            content: "Are you sure you want to exit group?",
-            title: "Confirm Exit");
-        if (await b) {
-          Get.offAll(() => Home());
-        }
       },
       child: Scaffold(
         appBar: AppBar(
-          leadingWidth: AppConstants.width * 0.1,
-          leading: Container(
-            margin: const EdgeInsets.only(left: 10),
-            child: GestureDetector(
-              onTap: () async {
-                if (controller.isNotification.value) {
-                  controller.isNotification.value = false;
-                  return;
-                }
-                Future<bool> b = CustomWidget.confirmDialogue(
-                    content: "Are you sure you want to exit group?",
-                    title: "Confirm Exit");
-                if (await b) {
-                  Get.offAll(() => Home());
-                }
-              },
-              child: const Icon(Icons.arrow_back),
-            ),
-          ),
           centerTitle: true,
           title: Hero(
             tag: "tag${widget.roomId}",

@@ -5,7 +5,7 @@ import '../controller/Username_dialog_controller.dart';
 
 class UsernameDialog extends StatelessWidget {
   final UsernameDialogController controller =
-    Get.put(UsernameDialogController());
+      Get.put(UsernameDialogController());
 
   UsernameDialog({super.key});
 
@@ -25,7 +25,6 @@ class UsernameDialog extends StatelessWidget {
                     ? null
                     : controller.isNotValidMsg.toString(),
               ),
-             
             );
           }),
         ],

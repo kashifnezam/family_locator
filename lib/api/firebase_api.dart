@@ -149,14 +149,14 @@ class FirebaseApi {
       return 0;
     }
     try {
-      await FirebaseFirestore.instance
+      await _firestore
           .collection('anonymous')
           .doc(deviceId)
           .set({
         'roomId': FieldValue.arrayUnion([roomId]),
         'name': name,
       }, SetOptions(merge: true));
-      await FirebaseFirestore.instance
+      await _firestore
           .collection('roomDetail')
           .doc(roomId)
           .set({

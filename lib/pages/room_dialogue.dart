@@ -2,6 +2,7 @@ import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../controller/room_dialogue_controller.dart';
 
 class RoomDialog extends StatelessWidget {
@@ -77,15 +78,51 @@ class RoomDialog extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  maxLines: 1,
-                  keyboardType: TextInputType.number,
-                  controller: controller.roomController,
-                  decoration: const InputDecoration(
-                    labelText: 'Room Number',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                Obx(() {
+                  return controller.isCreatingRoom.value
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTap: () async {
+                              XFile? file=  await CustomWidget.imagePickFrom(source: "gallary");
+                              },
+                              child: CircleAvatar(
+                                backgroundColor: Colors.blueGrey,
+                                radius: AppConstants.width * 0.07,
+                                child: Icon(
+                                  Icons.add_a_photo_sharp,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 10,
+                            ),
+                            SizedBox(
+                              width: AppConstants.width * 0.4,
+                              child: TextField(
+                                maxLines: 1,
+                                keyboardType: TextInputType.number,
+                                controller: controller.roomController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Room Number',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : TextField(
+                          maxLines: 1,
+                          keyboardType: TextInputType.number,
+                          controller: controller.roomController,
+                          decoration: const InputDecoration(
+                            labelText: 'Room Number',
+                            border: OutlineInputBorder(),
+                          ),
+                        );
+                })
               ],
             ),
             actions: [

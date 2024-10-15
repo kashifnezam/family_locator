@@ -1,5 +1,14 @@
+import 'dart:io';
+
+import 'package:family_locator/api/firebase_file_api.dart';
+import 'package:family_locator/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../pages/room_dialogue.dart';
+import '../utils/offline_data.dart';
+import 'username_dialogue.dart';
 
 class CustomWidget {
   static Widget buildCircularProgressIndicator() {
@@ -36,5 +45,39 @@ class CustomWidget {
           ),
         ) ??
         false; // Return false if the dialog is dismissed without a choice.
+  }
+
+  static Future<void> roomWidget() async {
+    String? usr = await OfflineData.getData("usr");
+    if (usr != null) {
+      String? dateString = await OfflineData.getData("date");
+      if (dateString != null) {
+        DateTime date = DateTime.parse(dateString);
+        if (DateTime.now().isAfter(date.add(const Duration(days: 7)))) {
+          usr = null;
+        }
+      }
+    }
+    usr != null ? Get.dialog(RoomDialog()) : Get.dialog(UsernameDialog());
+  }
+
+  static imagePickFrom({String source = "gallary", String field = "dp"}) async {
+    try {
+      XFile? file;
+      ImagePicker imagePicker = ImagePicker();
+      if (source == "camera") {
+        file = await imagePicker.pickImage(source: ImageSource.camera);
+      } else if (source == "gallary") {
+        file = await imagePicker.pickImage(source: ImageSource.gallery);
+      }
+      AppConstants.log.e(file?.path);
+      if (file != null) {
+        FirebaseFileApi.uploadImage(file.name, file.path, field);
+      }
+    } catch (e) {
+      confirmDialogue(
+          title: "Something went wrong",
+          content: "Error while choosing file $e");
+    }
   }
 }

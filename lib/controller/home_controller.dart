@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_locator/api/firebase_api.dart';
+import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/utils/location_utils.dart';
 import 'package:flutter/material.dart';
@@ -101,7 +102,7 @@ class HomeController extends GetxController {
   }
 
   void fitMapToBounds() {
-    if (userLocations.isNotEmpty) {
+    if (userLocations.isNotEmpty && userLocations.length > 1) {
       final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
       mapController.fitCamera(CameraFit.bounds(
           bounds: bounds,

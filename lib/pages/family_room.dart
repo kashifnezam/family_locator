@@ -1,14 +1,11 @@
 import 'package:family_locator/controller/family_room_controller.dart';
+import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../utils/constants.dart';
 import '../utils/device_info.dart';
-import '../utils/offline_data.dart';
 import '../widgets/button_widget.dart';
-import '../widgets/username_dialogue.dart';
 import 'chat_room.dart';
-import 'room_dialogue.dart';
 
 class FamilyRoom extends StatefulWidget {
   const FamilyRoom({super.key});
@@ -29,22 +26,7 @@ class _FamilyRoomState extends State<FamilyRoom> {
           ),
           backgroundColor: Colors.blueGrey,
           title: GestureDetector(
-            onTap: () async {
-              String? usr = await OfflineData.getData("usr");
-              if (usr != null) {
-                String? dateString = await OfflineData.getData("date");
-                if (dateString != null) {
-                  DateTime date = DateTime.parse(dateString);
-                  if (DateTime.now()
-                      .isAfter(date.add(const Duration(days: 7)))) {
-                    usr = null;
-                  }
-                }
-              }
-              usr != null
-                  ? Get.dialog(RoomDialog())
-                  : Get.dialog(UsernameDialog());
-            },
+            onTap: () => CustomWidget.roomWidget(),
             child: ButtonWidget.elevatedBtn("Create/Join Group",
                 height: AppConstants.height * 0.05),
           ),
@@ -66,7 +48,7 @@ class _FamilyRoomState extends State<FamilyRoom> {
                 List room = controller.roomList;
                 return ListTile(
                   onTap: () {
-                    Get.off(
+                    Get.to(
                       () => ChatRoom(
                         roomId: room[index]["roomNo"],
                         userId: DeviceInfo.deviceId.toString(),

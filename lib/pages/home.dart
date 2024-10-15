@@ -7,7 +7,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
 import '../utils/device_info.dart';
+import '../utils/offline_data.dart';
 import '../widgets/button_widget.dart';
+import '../widgets/username_dialogue.dart';
+import 'room_dialogue.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -92,6 +95,10 @@ class _HomeState extends State<Home> {
                 ),
               ),
               ListTile(
+                onTap: () async {
+                  Get.back();
+                  CustomWidget.roomWidget();
+                },
                 leading: Icon(
                   Icons.groups_3_sharp,
                   color: Colors.white54,
