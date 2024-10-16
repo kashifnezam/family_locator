@@ -1,7 +1,6 @@
 import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
@@ -10,8 +9,6 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:flutter_map/flutter_map.dart';
 import '../controller/chat_room_controller.dart';
 import '../models/message_model.dart';
-import 'family_room.dart';
-import 'home.dart';
 import 'members.dart';
 
 class ChatRoom extends StatefulWidget {
@@ -42,7 +39,12 @@ class ChatRoomState extends State<ChatRoom> {
       owner: widget.owner,
     ));
     final TextEditingController messageController = TextEditingController();
-    var userProfileUrl = null;
+    String userProfileUrl = "";
+
+    AppConstants.log.e(userProfileUrl);
+    String roomName = widget.roomName;
+    String roomSrtName =
+        roomName.length >= 2 ? roomName.substring(0, 2) : roomName;
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) async {
@@ -61,14 +63,10 @@ class ChatRoomState extends State<ChatRoom> {
               children: [
                 CircleAvatar(
                   radius: 19.0, // Inner circle for the image
-                  backgroundImage:
-                      userProfileUrl != null && userProfileUrl.isNotEmpty
-                          ? NetworkImage(userProfileUrl)
-                          : null, // Use network image if available
-                  child: userProfileUrl == null || userProfileUrl.isEmpty
-                      ? const Icon(Icons.groups_3_sharp,
-                          size: 30.0) // Default icon
-                      : null,
+                  backgroundImage: userProfileUrl != ""
+                      ? NetworkImage(userProfileUrl)
+                      : null, // Use network image if available
+                  child: Text(roomSrtName.toUpperCase()),
                 ),
                 const SizedBox(
                   width: 6,
@@ -85,10 +83,14 @@ class ChatRoomState extends State<ChatRoom> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.roomName),
+                      Text(
+                        widget.roomName,
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
                       Text(
                         widget.roomId,
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(fontSize: 10),
                       ),
                     ],
                   ),

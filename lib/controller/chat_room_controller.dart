@@ -137,6 +137,7 @@ class ChatRoomController extends GetxController {
     isLoading.value = true;
 
     try {
+      await fetchUserNames(roomId);
       Query query = _firestore
           .collection('chatrooms')
           .doc(roomId)
@@ -169,7 +170,6 @@ class ChatRoomController extends GetxController {
       _lastDocument = snapshot.docs.last;
       _hasMoreMessages = snapshot.docs.length == messagesPerPage;
 
-      await fetchUserNames(roomId);
       isLoading.value = false;
     } catch (error) {
       AppConstants.log.e('Error fetching messages: $error');
@@ -220,7 +220,8 @@ class ChatRoomController extends GetxController {
       membersMap.add({
         "GroupName": userNames[owner] ?? 'Unknown Group',
         "ownerId": owner,
-        "dp": "", // Optional group profile picture URL
+        "dp": await FirebaseApi.getDP(
+            "roomDetail", roomId), // Optional group profile picture URL
         "createdAt": "", // Replace with actual date
         "roomId": roomId,
       });
@@ -281,8 +282,6 @@ class ChatRoomController extends GetxController {
   //     }
   //   });
   // }
-
-  
 
   void validateMessage(String text) {
     isMessageValid.value = text.trim().isNotEmpty;
@@ -455,8 +454,8 @@ class ChatRoomController extends GetxController {
             for (var doc in anonymousSnapshot.docs) {
               final userId = doc.id;
               final currLoc = doc.get('currLoc'); // Get the currLoc string
-              final location =
-                  LocationUtils.parseLocation(currLoc); // Parse the location string
+              final location = LocationUtils.parseLocation(
+                  currLoc); // Parse the location string
               if (location != null) {
                 userLocations[userId] = location; // Store the LatLng object
               }

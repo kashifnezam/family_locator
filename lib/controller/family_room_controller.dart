@@ -1,10 +1,6 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:get/get.dart';
-
 import '../api/firebase_api.dart';
 import '../utils/device_info.dart';
 
@@ -16,9 +12,6 @@ class FamilyRoomController extends GetxController {
   void onInit() {
     super.onInit();
     getRoomDetails();
-    Timer(const Duration(seconds: 6), () {
-      AppConstants.log.w(roomList);
-    });
   }
 
   void getRoomDetails() async {
@@ -34,9 +27,8 @@ class FamilyRoomController extends GetxController {
           field["name"] = roomDoc.data()!.containsKey("roomName")
               ? roomDoc.get("roomName")
               : "Unknown";
-          field["dp"] = roomDoc.data()!.containsKey("dp")
-              ? roomDoc.get("dp")
-              : "https://bit.ly/4dQVSet";
+          field["dp"] =
+              roomDoc.data()!.containsKey("dp") ? roomDoc.get("dp") : "";
           field["owner"] = roomDoc.get("owner");
         }
         roomList.add(field);

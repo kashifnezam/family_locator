@@ -1,8 +1,8 @@
+import 'dart:io';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import '../controller/room_dialogue_controller.dart';
 
 class RoomDialog extends StatelessWidget {
@@ -29,7 +29,12 @@ class RoomDialog extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  onPressed: () => Get.back(),
+                  onPressed: () {
+                    controller.imagepath.value = "";
+                    controller.nameController.clear();
+                    controller.roomController.clear();
+                    Get.back();
+                  },
                 ),
               ],
             ),
@@ -80,36 +85,60 @@ class RoomDialog extends StatelessWidget {
                 const SizedBox(height: 16),
                 Obx(() {
                   return controller.isCreatingRoom.value
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                      ? Column(
                           children: [
-                            GestureDetector(
-                              onTap: () async {
-                              XFile? file=  await CustomWidget.imagePickFrom(source: "gallary");
-                              },
-                              child: CircleAvatar(
-                                backgroundColor: Colors.blueGrey,
-                                radius: AppConstants.width * 0.07,
-                                child: Icon(
-                                  Icons.add_a_photo_sharp,
-                                  color: Colors.white,
-                                ),
+                            TextField(
+                              maxLines: 1,
+                              controller: controller.nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Room Name',
+                                border: OutlineInputBorder(),
                               ),
                             ),
                             SizedBox(
-                              width: 10,
+                              height: 10,
                             ),
-                            SizedBox(
-                              width: AppConstants.width * 0.4,
-                              child: TextField(
-                                maxLines: 1,
-                                keyboardType: TextInputType.number,
-                                controller: controller.roomController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Room Number',
-                                  border: OutlineInputBorder(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                SizedBox(
+                                  width: AppConstants.width * 0.45,
+                                  child: TextField(
+                                    maxLines: 1,
+                                    keyboardType: TextInputType.number,
+                                    controller: controller.roomController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Room Number',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                GestureDetector(
+                                  onTap: () async {
+                                    controller.imagepath.value =
+                                        await CustomWidget.imagePickFrom(
+                                            source: "gallary");
+                                  },
+                                  child: CircleAvatar(
+                                      backgroundColor: Colors.blueGrey,
+                                      radius: AppConstants.width * 0.07,
+                                      backgroundImage: controller
+                                                  .imagepath.value !=
+                                              ""
+                                          ? FileImage(
+                                              File(controller.imagepath.value))
+                                          : null,
+                                      child: controller.imagepath.value == ""
+                                          ? Icon(
+                                              Icons.add_a_photo_sharp,
+                                              color: Colors.white,
+                                            )
+                                          : null),
+                                ),
+                              ],
                             ),
                           ],
                         )

@@ -11,9 +11,10 @@ class FirebaseFileApi {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Upload Image on Firebase
-  static uploadImage(String filename, String filePath, String field) async {
+  static Future<String> uploadImage(
+      String filename, String filePath, String folder) async {
     try {
-      Reference dir = ref.child("family_room/image/$field/$filename");
+      Reference dir = ref.child("family_room/image/$folder/$filename");
       await dir.putFile(File(filePath));
       String downloadUrl = await dir.getDownloadURL();
       AppConstants.log.i("File uploaded successfully");
@@ -24,6 +25,7 @@ class FirebaseFileApi {
           title: "Something went wrong",
           content: "Error while uploading file, $e",
           isCancel: false);
+      return "";
     }
   }
 

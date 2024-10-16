@@ -1,7 +1,3 @@
-import 'dart:io';
-
-import 'package:family_locator/api/firebase_file_api.dart';
-import 'package:family_locator/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -61,23 +57,30 @@ class CustomWidget {
     usr != null ? Get.dialog(RoomDialog()) : Get.dialog(UsernameDialog());
   }
 
-  static imagePickFrom({String source = "gallary", String field = "dp"}) async {
+  static Future<String> imagePickFrom({String source = "gallary"}) async {
     try {
       XFile? file;
+
       ImagePicker imagePicker = ImagePicker();
       if (source == "camera") {
         file = await imagePicker.pickImage(source: ImageSource.camera);
       } else if (source == "gallary") {
         file = await imagePicker.pickImage(source: ImageSource.gallery);
       }
-      AppConstants.log.e(file?.path);
+
+      // if (filename == "NA") {
+      //   filename = file != null ? file.name : "";
+      // }
       if (file != null) {
-        FirebaseFileApi.uploadImage(file.name, file.path, field);
+        return file.path;
       }
+      return "";
     } catch (e) {
       confirmDialogue(
           title: "Something went wrong",
           content: "Error while choosing file $e");
+      return "";
     }
   }
 }
+//  await FirebaseFileApi.uploadImage(filename, file.path, folder);

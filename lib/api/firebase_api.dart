@@ -149,19 +149,13 @@ class FirebaseApi {
       return 0;
     }
     try {
-      await _firestore
-          .collection('anonymous')
-          .doc(deviceId)
-          .set({
+      await _firestore.collection('anonymous').doc(deviceId).set({
         'roomId': FieldValue.arrayUnion([roomId]),
         'name': name,
       }, SetOptions(merge: true));
-      await _firestore
-          .collection('roomDetail')
-          .doc(roomId)
-          .set({
+      await _firestore.collection('roomDetail').doc(roomId).set({
         'members': FieldValue.arrayUnion([deviceId]),
-        'roomName': "$name's Room",
+        'roomName': name,
         "owner": deviceId,
         "created": DateTime.now().toString()
       }, SetOptions(merge: true));
@@ -321,7 +315,7 @@ class FirebaseApi {
     return roomDoc.get("roomName") ?? "Chat Room";
   }
 
-  // Get Amdin
+  // Get Admin
   static Future<String> getOwner(String roomNo) async {
     DocumentSnapshot roomDoc =
         await _firestore.collection("roomDetail").doc(roomNo).get();
@@ -330,6 +324,27 @@ class FirebaseApi {
       return "";
     }
     return roomDoc.get("owner") ?? "";
+  }
+
+  // Get DP
+  static Future<String> getDP(String collection, String doc) async {
+    DocumentSnapshot dpDoc =
+        await _firestore.collection(collection).doc(doc).get();
+
+    // Check if the document exists
+    if (!dpDoc.exists) {
+      AppConstants.log.e("Collection ($collection) does not exist");
+      return "";
+    }
+
+    // Check if the 'dp' field exists in the document
+    if (dpDoc.data() != null &&
+        (dpDoc.data() as Map<String, dynamic>).containsKey('dp')) {
+      return dpDoc.get('dp') ?? "";
+    } else {
+      AppConstants.log.e("DP field does not exist in document ($doc)");
+      return "";
+    }
   }
 
   static Future<int> exitGroup(String roomNo, String userId) async {

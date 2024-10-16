@@ -46,6 +46,9 @@ class _FamilyRoomState extends State<FamilyRoom> {
               itemCount: controller.roomList.length,
               itemBuilder: (context, index) {
                 List room = controller.roomList;
+                String roomName = room[index]["name"];
+                String roomSrtName =
+                    roomName.length >= 2 ? roomName.substring(0, 2) : roomName;
                 return ListTile(
                   onTap: () {
                     Get.to(
@@ -59,9 +62,12 @@ class _FamilyRoomState extends State<FamilyRoom> {
                   },
                   leading: CircleAvatar(
                     radius: AppConstants.width * 0.05,
-                    backgroundImage: NetworkImage(
-                      room[index]["dp"],
-                    ),
+                    backgroundImage: room[index]["dp"] != ""
+                        ? NetworkImage(
+                            room[index]["dp"],
+                          )
+                        : null,
+                    child: Text(roomSrtName.toUpperCase()),
                   ),
                   title: Row(
                     children: [

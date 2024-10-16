@@ -2,6 +2,7 @@ import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import '../api/firebase_file_api.dart';
 import '../pages/chat_room.dart';
 import '../utils/offline_data.dart';
 
@@ -10,6 +11,7 @@ class RoomDialogController extends GetxController {
   final roomController = TextEditingController();
   final isCreatingRoom = true.obs;
   final isLoading = false.obs; // Set to false initially
+  RxString imagepath = "".obs;
 
   void toggleMode() {
     isCreatingRoom.toggle();
@@ -18,6 +20,16 @@ class RoomDialogController extends GetxController {
   }
 
   Future<void> submitForm() async {
+    if (nameController.text.isEmpty ||
+        nameController.text.length < 3 ||
+        nameController.text.length > 15) {
+      Get.snackbar(
+        backgroundColor: Colors.red.shade100,
+        'Error',
+        'Please enter valid room name',
+      );
+      return;
+    }
     if (roomController.text.isEmpty) {
       Get.snackbar(
         backgroundColor: Colors.red.shade100,
@@ -46,6 +58,13 @@ class RoomDialogController extends GetxController {
 
         if (response == 1) {
           String owner = await FirebaseApi.getOwner(roomController.text);
+          String filename = "room-${roomController.text}";
+          String url = await FirebaseFileApi.uploadImage(
+              filename, imagepath.value, "dp");
+          if (roomController.text != "" && url != "") {
+            await FirebaseFileApi.updateImagePath(
+                "roomDetail", roomController.text, url, "dp");
+          }
           Get.back();
           Get.snackbar(
             backgroundColor: Colors.green,
