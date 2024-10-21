@@ -8,6 +8,7 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
 import '../utils/device_info.dart';
 import '../widgets/button_widget.dart';
+import 'edit_profile.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -79,6 +80,10 @@ class _HomeState extends State<Home> {
                 ),
               ),
               ListTile(
+                onTap: () {
+                  Get.back();
+                  Get.to(() => EditProfile());
+                },
                 leading: Icon(
                   Icons.account_circle_outlined,
                   color: Colors.white54,
@@ -92,7 +97,7 @@ class _HomeState extends State<Home> {
                 ),
               ),
               ListTile(
-                onTap: () async {
+                onTap: () {
                   Get.back();
                   CustomWidget.roomWidget();
                 },

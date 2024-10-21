@@ -36,12 +36,14 @@ class FirebaseFileApi {
         field: url,
       }, SetOptions(merge: true));
       AppConstants.log.i("File path updated successfully");
+      return 0;
     } catch (e) {
       AppConstants.log.e("Error while updating file path, $e");
       CustomWidget.confirmDialogue(
           title: "Something went wrong",
           content: "Error while updating file path, $e",
           isCancel: false);
+          return -1;
     }
   }
 }

@@ -20,9 +20,10 @@ class RoomDialogController extends GetxController {
   }
 
   Future<void> submitForm() async {
-    if (nameController.text.isEmpty ||
-        nameController.text.length < 3 ||
-        nameController.text.length > 15) {
+    if ((nameController.text.isEmpty ||
+            nameController.text.length < 3 ||
+            nameController.text.length > 15) &&
+        isCreatingRoom.value) {
       Get.snackbar(
         backgroundColor: Colors.red.shade100,
         'Error',
