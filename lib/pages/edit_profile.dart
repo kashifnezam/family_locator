@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 import '../utils/constants.dart';
 
 class EditProfile extends StatefulWidget {
-  const EditProfile({Key? key}) : super(key: key);
+  const EditProfile({super.key});
 
   @override
   State<EditProfile> createState() => _EditProfileState();

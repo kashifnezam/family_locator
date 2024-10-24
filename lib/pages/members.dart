@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controller/members_controller.dart';
+import '../widgets/custom_widget.dart';
 
 late bool isOwner;
 
@@ -24,11 +27,93 @@ class MembersPage extends StatelessWidget {
   Widget build(BuildContext context) {
     isOwner = controller.user.value == controller.membersMap[0]['ownerId'];
     return Scaffold(
-      appBar: AppBar(title: const Text('Group Members')),
+      appBar: AppBar(
+        title: const Text('Group Members'),
+        actions: [
+          Obx(
+            () => Row(
+              children: [
+                if (controller.groupNameEdit.value || controller.isLoad.value)
+                  GestureDetector(
+                    onTap: () {
+                      controller.submitForm();
+                      controller.groupNameEdit.value = false;
+                      controller.groupNameController.text =
+                          controller.groupName.value;
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: !controller.isLoad.value
+                          ? ButtonWidget.elevatedBtn(
+                              "Save",
+                              height: AppConstants.height * 0.05,
+                              width: AppConstants.width * 0.2,
+                            )
+                          : Padding(
+                              padding: EdgeInsets.only(
+                                  right: AppConstants.width * 0.2),
+                              child:
+                                  CustomWidget.buildCircularProgressIndicator(),
+                            ),
+                    ),
+                  ),
+                if (controller.groupNameEdit.value && !controller.isLoad.value)
+                  GestureDetector(
+                    onTap: () {
+                      controller.groupNameEdit.value = false;
+                      controller.dpImagePath.value =
+                          controller.finalDpImagePath.value;
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ButtonWidget.elevatedBtn("Cancel",
+                          height: AppConstants.height * 0.05,
+                          width: AppConstants.width * 0.2,
+                          disabled: true),
+                    ),
+                  ),
+              ],
+            ),
+          )
+        ],
+      ),
       body: Obx(() {
         return Column(
           children: [
-            _buildGroupHeader(),
+            _buildProfilePictureSection(),
+            const SizedBox(height: 10),
+            if (!controller.groupNameEdit.value)
+              ListTile(
+                leading: const Icon(Icons.groups_3_outlined),
+                title: Text(controller.groupName.value),
+                subtitle: const Text(
+                  "Room Name",
+                  style: TextStyle(color: Colors.grey),
+                ),
+                trailing: GestureDetector(
+                    onTap: () {
+                      controller.groupNameEdit.value = true;
+                    },
+                    child: const Icon(Icons.edit)),
+              ),
+            if (controller.groupNameEdit.value)
+              ListTile(
+                leading: const Icon(Icons.groups_3_outlined),
+                title: TextField(
+                  controller: controller.groupNameController,
+                  maxLines: 1,
+                  decoration: InputDecoration(
+                    labelText: 'Enter Room Name',
+                    border: OutlineInputBorder(),
+                    errorText: controller.isValid.value
+                        ? null
+                        : controller.isNotValidMsg.toString(),
+                  ),
+                ),
+              ),
+            Divider(
+              color: Colors.grey,
+            ),
             Expanded(child: _buildMemberList()),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -43,6 +128,78 @@ class MembersPage extends StatelessWidget {
           ],
         );
       }),
+    );
+  }
+
+  Widget _buildProfilePictureSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      color: Colors.blueGrey,
+      child: Center(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Obx(() {
+              return CircleAvatar(
+                backgroundColor: Colors.blueGrey,
+                radius: AppConstants.width * 0.2,
+                backgroundImage: controller.dpImagePath.value.isNotEmpty
+                    ? (controller.dpImagePath.value.startsWith('http')
+                        ? NetworkImage(
+                            controller.dpImagePath.value) // If it's a URL
+                        : FileImage(File(controller
+                            .dpImagePath.value))) // If it's a local file
+                    : null,
+                child: controller.dpImagePath.value.isEmpty
+                    ? CircleAvatar(
+                        radius: AppConstants.width * 0.2,
+                        child: Text(
+                          controller.groupName.value
+                              .substring(0, 2)
+                              .toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 40,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ) // Show initials if no image
+                    : null,
+              );
+            }),
+            _buildEditIcon(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditIcon() {
+    return Positioned(
+      bottom: 10,
+      right: 10,
+      child: GestureDetector(
+        onTap: () async {
+          // Opens image picker and updates the profile image
+          String tempDP = await CustomWidget.imagePickFrom();
+          if (tempDP.isNotEmpty) {
+            controller.dpImagePath.value = tempDP;
+            controller.groupNameEdit.value = true;
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: const BoxDecoration(
+            color: Colors.blue, // Background color for the edit icon
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.camera,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+      ),
     );
   }
 

@@ -122,7 +122,7 @@ class FirebaseApi {
 
       await documentReference.set(data.toJson(), SetOptions(merge: true));
       AppConstants.log.i(
-          'Data added successfully to document $documentId in collection $collection.');
+          'Data added successfully to document $documentId in collection $collection.\n${data.toJson()}');
       return true; // Indicate that the data was added successfully
     } catch (e) {
       AppConstants.log.e('Error adding data: $e');
@@ -151,7 +151,6 @@ class FirebaseApi {
     try {
       await _firestore.collection('anonymous').doc(deviceId).set({
         'roomId': FieldValue.arrayUnion([roomId]),
-        'name': name,
       }, SetOptions(merge: true));
       await _firestore.collection('roomDetail').doc(roomId).set({
         'members': FieldValue.arrayUnion([deviceId]),
@@ -381,5 +380,21 @@ class FirebaseApi {
           isCancel: false);
       return 1;
     }
+  }
+
+  // Update RoomName
+  static updateRoomName(String roomName, String roomId) async {
+      try {
+        await _firestore.collection('roomDetail').doc(roomId).set({
+        'roomName': roomName,
+        "updated": DateTime.now().toString(),
+      }, SetOptions(merge: true));
+      AppConstants.log.i('Room Name updated successfully');
+      return 0;
+      } catch (e) {
+      AppConstants.log.e('Error updating Room Name of $roomId');
+        CustomWidget.confirmDialogue(title: "Error Updating Name", content: "Error occured while updating Room Name: $roomName of RoomId: $roomId");
+      }
+      return -1;
   }
 }

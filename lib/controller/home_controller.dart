@@ -1,14 +1,14 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/utils/location_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+
+import '../utils/offline_data.dart';
 
 class HomeController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -18,32 +18,35 @@ class HomeController extends GetxController {
   RxMap<String, List<String>> userDetails = <String, List<String>>{}.obs;
   List<String> roomIds = [];
   final mapController = MapController();
+  RxString dpImagePath = "".obs;
+  RxString username = "".obs;
 
   @override
   void onInit() {
     super.onInit();
+    getUserNameDP();
     fetchLocations();
   }
 
   fetchLocations() async {
     List<String> roomIds = await getAllMembersInRooms();
-    // AppConstants.log.e(roomIds);
-
     if (roomIds.isNotEmpty) {
       _firestore
           .collection("anonymous")
           .where(FieldPath.documentId, whereIn: roomIds)
           .snapshots()
-          .listen((roomSnapshot) {
+          .listen((roomSnapshot) async {
         userLocations.clear(); // Clear previous locations
         for (var doc in roomSnapshot.docs) {
           List<String> usr = [];
+          final dp = await FirebaseApi.getDP("anonymous", doc.id);
+          // Add dp to usr list:
+          usr.add(dp);
           usr.add(doc.get('usr'));
           if (doc.data().containsKey("roomId")) {
             usr.addAll(getCommonGroup(doc.get('roomId').cast<String>()));
           }
           final userId = doc.id;
-
           final currLoc = doc.get('currLoc'); // Get the currLoc string
           final location =
               LocationUtils.parseLocation(currLoc); // Parse the location string
@@ -81,6 +84,7 @@ class HomeController extends GetxController {
   LatLngBounds? get userLocationBounds {
     if (userLocations.isEmpty || userLocations.length < 2) return null;
     final points = userLocations.values.toList();
+
     return LatLngBounds.fromPoints(points);
   }
 
@@ -109,4 +113,11 @@ class HomeController extends GetxController {
           padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 0)));
     }
   }
+
+  getUserNameDP() async {
+    username.value = (await OfflineData.getData("usr"))!;
+    dpImagePath.value =
+        await FirebaseApi.getDP("anonymous", DeviceInfo.deviceId!);
+  }
+  
 }

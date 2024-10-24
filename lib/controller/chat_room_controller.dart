@@ -218,7 +218,7 @@ class ChatRoomController extends GetxController {
 
       // Add group details (0th index of membersMap)
       membersMap.add({
-        "GroupName": userNames[owner] ?? 'Unknown Group',
+        "GroupName": roomName,
         "ownerId": owner,
         "dp": await FirebaseApi.getDP(
             "roomDetail", roomId), // Optional group profile picture URL

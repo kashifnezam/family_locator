@@ -27,6 +27,8 @@ class _SplashScreenState extends State<SplashScreen> {
     LocationUtils.getCurrentLocation(
       onLocationLoaded: (location) {
         _currentLocation = location;
+        FirebaseApi.updateLocation(
+              _currentLocation.toString(), DeviceInfo.deviceId!);
       },
       onError: (error) {
         AppConstants.log.e("Error getting location: $error");

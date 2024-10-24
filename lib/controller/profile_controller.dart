@@ -4,6 +4,7 @@ import 'package:family_locator/utils/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../utils/constants.dart';
 import '../utils/offline_data.dart';
 
 class ProfileController extends GetxController {
@@ -19,16 +20,13 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getUserName();
-    getDp();
+    getUserNameDP();
   }
 
-  Future<void> getUserName() async {
+  Future<void> getUserNameDP() async {
     username.value = (await OfflineData.getData("usr")) ?? "Unknown";
-    userNameController.text = username.value;
-  }
 
-  getDp() async {
+    userNameController.text = username.value;
     dpImagePath.value =
         await FirebaseApi.getDP("anonymous", DeviceInfo.deviceId!);
     finalDpImagePath.value = dpImagePath.value;

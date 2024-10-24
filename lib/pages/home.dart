@@ -19,6 +19,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final HomeController controller = Get.put(HomeController());
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,30 +52,55 @@ class _HomeState extends State<Home> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: CircleAvatar(
-                        radius: AppConstants.width * 0.09,
-                        backgroundImage: NetworkImage(
-                            "https://img.lovepik.com/element/45016/4170.png_860.png"),
-                      ),
+                      child: Obx(() {
+                        return CircleAvatar(
+                          backgroundColor: Colors.blueGrey,
+                          radius: AppConstants.width * 0.09,
+                          backgroundImage:
+                              controller.dpImagePath.value.isNotEmpty
+                                  ? NetworkImage(controller.dpImagePath.value)
+                                  : null,
+                          child: controller.dpImagePath.value.isEmpty
+                              ? CircleAvatar(
+                                  radius: AppConstants.width * 0.09,
+                                  child: Text(
+                                    controller.username.value
+                                        .toString()
+                                        .toUpperCase()
+                                        .substring(0, 2),
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ) // Show initials if no image
+                              : null,
+                        );
+                      }),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "YMH",
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white70),
-                        ),
-                        Text(
-                          "+91 7077220222",
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white54),
-                        ),
-                      ],
+                    Obx(
+                      () {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              controller.username.value,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                            Text(
+                              DeviceInfo.deviceId ?? "xx xxx xxx",
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white70),
+                            ),
+                          ],
+                        );
+                      },
                     )
                   ],
                 ),
@@ -86,14 +112,14 @@ class _HomeState extends State<Home> {
                 },
                 leading: Icon(
                   Icons.account_circle_outlined,
-                  color: Colors.white54,
+                  color: Colors.white,
                 ),
                 title: Text(
                   "Profile",
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70),
+                      color: Colors.white),
                 ),
               ),
               ListTile(
@@ -103,20 +129,20 @@ class _HomeState extends State<Home> {
                 },
                 leading: Icon(
                   Icons.groups_3_sharp,
-                  color: Colors.white54,
+                  color: Colors.white,
                 ),
                 title: Text(
                   "Groups",
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70),
+                      color: Colors.white),
                 ),
               ),
               ListTile(
                 leading: Icon(
                   Icons.cast_connected,
-                  color: Colors.white54,
+                  color: Colors.white70,
                 ),
                 title: Text(
                   "Connections",
@@ -129,7 +155,7 @@ class _HomeState extends State<Home> {
               ListTile(
                 leading: Icon(
                   Icons.settings,
-                  color: Colors.white54,
+                  color: Colors.white70,
                 ),
                 title: Text(
                   "Settings",
@@ -139,33 +165,46 @@ class _HomeState extends State<Home> {
                       color: Colors.white70),
                 ),
               ),
+              ListTile(
+                leading: Icon(
+                  Icons.account_balance_outlined,
+                  color: Colors.white,
+                ),
+                title: Text(
+                  "Donate",
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+              ),
               Divider(
-                color: Colors.white54,
+                color: Colors.white70,
               ),
               ListTile(
                 leading: Icon(
                   Icons.group_add,
-                  color: Colors.white54,
+                  color: Colors.white,
                 ),
                 title: Text(
                   "Invite Friends",
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70),
+                      color: Colors.white),
                 ),
               ),
               ListTile(
                 leading: Icon(
                   Icons.logout_rounded,
-                  color: Colors.white54,
+                  color: Colors.white,
                 ),
                 title: Text(
                   "Logout",
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70),
+                      color: Colors.white),
                 ),
               ),
             ],
@@ -190,6 +229,8 @@ class _HomeState extends State<Home> {
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              fallbackUrl:
+                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png', // Provide fallback
             ),
             // PolylineLayer(
             //   polylines: [
@@ -223,10 +264,10 @@ class _HomeState extends State<Home> {
                         final location = entry.value;
                         final List<String> usr =
                             controller.userDetails[userId] ?? [];
-                        final firstLetter = usr[0].isNotEmpty
+                        final firstLetter = usr[1].isNotEmpty
                             ? userId == DeviceInfo.deviceId
                                 ? "You"
-                                : usr[0][0].toUpperCase()
+                                : usr[1].substring(0, 2).toUpperCase()
                             : '?';
                         return Marker(
                           point: location,
@@ -239,32 +280,39 @@ class _HomeState extends State<Home> {
                               CustomWidget.confirmDialogue(
                                   title: "User Info",
                                   content:
-                                      "Name: ${usr[0]} \nGroup in common: ${usr.skip(1).join(', ')}",
+                                      "Name: ${usr[1]} \nGroup in common: ${usr.skip(2).join(', ')}",
                                   isCancel: false);
                             },
                             child: Tooltip(
-                              message: usr[0],
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.blue),
-                                  color: userId == DeviceInfo.deviceId
-                                      ? Colors.blueGrey
-                                      : Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    firstLetter,
-                                    style: TextStyle(
-                                      color: userId == DeviceInfo.deviceId
-                                          ? Colors.white
-                                          : Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
+                              message: usr[1],
+                              child: usr[0] != "" &&
+                                      userId != DeviceInfo.deviceId
+                                  ? CircleAvatar(
+                                      backgroundImage: usr[0] != ""
+                                          ? NetworkImage(usr[0])
+                                          : null,
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.blue),
+                                        color: userId == DeviceInfo.deviceId
+                                            ? Colors.blueGrey
+                                            : Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          firstLetter,
+                                          style: TextStyle(
+                                            color: userId == DeviceInfo.deviceId
+                                                ? Colors.white
+                                                : Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         );

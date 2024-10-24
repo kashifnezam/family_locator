@@ -12,7 +12,6 @@ class SaveDataApi {
         "anonymous",
         deviceId,
         AnonymousModel(
-          currLoc: currentLocation.toString(),
           id: deviceId,
           macAd: macAddress ?? '',
           ipAddress: ipAddress ?? '', // Handle potential null

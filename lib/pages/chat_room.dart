@@ -177,6 +177,8 @@ class ChatRoomState extends State<ChatRoom> {
                             TileLayer(
                               urlTemplate:
                                   'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              fallbackUrl:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png', // Provide fallback
                             ),
                             PolylineLayer(
                               polylines: [
