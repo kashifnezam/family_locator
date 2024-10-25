@@ -67,7 +67,9 @@ class _FamilyRoomState extends State<FamilyRoom> {
                             room[index]["dp"],
                           )
                         : null,
-                    child: Text(roomSrtName.toUpperCase()),
+                    child: room[index]["dp"] == ""
+                        ? Text(roomSrtName.toUpperCase())
+                        : null,
                   ),
                   title: Row(
                     children: [

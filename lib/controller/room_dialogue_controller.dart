@@ -113,7 +113,6 @@ class RoomDialogController extends GetxController {
             snackPosition: SnackPosition.TOP,
           );
 
-          FirebaseApi.userJoinLeft("joined", roomController.text);
           Get.to(
             () => ChatRoom(
               roomId: roomController.text,

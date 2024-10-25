@@ -187,10 +187,12 @@ class FirebaseApi {
     return 1;
   }
 
-  static Future<void> userJoinLeft(String status, String roomId) async {
+  static Future<void> userJoinLeft(String status, String roomId, String userId) async {
     final message = MessageModel(
       sender: 'System', // System message to indicate a user joined
-      text: '${await OfflineData.getData("usr")} $status the room',
+      text: status == "joined" ? 
+                      '${await OfflineData.getData("usr")} added => $userId'
+                      : "$userId left the room",
       timestamp: Timestamp.now(),
     );
 

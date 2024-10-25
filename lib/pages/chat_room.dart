@@ -39,9 +39,6 @@ class ChatRoomState extends State<ChatRoom> {
       owner: widget.owner,
     ));
     final TextEditingController messageController = TextEditingController();
-    String userProfileUrl = "";
-
-    AppConstants.log.e(userProfileUrl);
     String roomName = widget.roomName;
     String roomSrtName =
         roomName.length >= 2 ? roomName.substring(0, 2) : roomName;
@@ -61,12 +58,18 @@ class ChatRoomState extends State<ChatRoom> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 19.0, // Inner circle for the image
-                  backgroundImage: userProfileUrl != ""
-                      ? NetworkImage(userProfileUrl)
-                      : null, // Use network image if available
-                  child: Text(roomSrtName.toUpperCase()),
+                Obx(
+                  () {
+                    return CircleAvatar(
+                      radius: 19.0, // Inner circle for the image
+                      backgroundImage: controller.roomDP.value != ""
+                          ? NetworkImage(controller.roomDP.value)
+                          : null, // Use network image if available
+                      child: controller.roomDP.value == ""
+                          ? Text(roomSrtName.toUpperCase())
+                          : null,
+                    );
+                  },
                 ),
                 const SizedBox(
                   width: 6,
@@ -517,7 +520,8 @@ class ChatRoomState extends State<ChatRoom> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
-                                        child: Text(
+                                          child: Obx(
+                                        () => Text(
                                           controller.userNames[id] ??
                                               id, // Notification content
                                           style: const TextStyle(
@@ -525,7 +529,7 @@ class ChatRoomState extends State<ChatRoom> {
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
-                                      ),
+                                      )),
                                       Row(
                                         children: [
                                           IconButton(
@@ -551,6 +555,11 @@ class ChatRoomState extends State<ChatRoom> {
                                                       widget.roomId,
                                                       "roomId",
                                                       true);
+                                              FirebaseApi.userJoinLeft(
+                                                  "joined",
+                                                  widget.roomId,
+                                                  controller.userNames[id] ??
+                                                      id);
                                             },
                                             icon: const Icon(
                                               Icons.check,

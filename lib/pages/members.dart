@@ -203,37 +203,7 @@ class MembersPage extends StatelessWidget {
     );
   }
 
-  Widget _buildGroupHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: AppConstants.width * 0.3,
-            backgroundImage: controller.membersMap[0]['dp'] != ""
-                ? NetworkImage(controller.membersMap[0]['dp'])
-                : null,
-            child: controller.membersMap[0]['dp'] == ""
-                ? Icon(
-                    Icons.groups_3_sharp,
-                    size: AppConstants.width * 0.3,
-                  )
-                : null,
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            decoration: const InputDecoration(
-              labelText: 'Group Name',
-              border: OutlineInputBorder(),
-            ),
-            controller: TextEditingController(text: controller.groupName.value),
-            onSubmitted: (newName) => controller.updateGroupName(newName),
-          ),
-        ],
-      ),
-    );
-  }
-
+ 
   Widget _buildMemberList() {
     return ListView.builder(
       itemCount: controller.membersMap.length - 1, // Exclude group info

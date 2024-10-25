@@ -3,8 +3,6 @@ import 'package:family_locator/api/firebase_file_api.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../utils/constants.dart';
 import '../utils/offline_data.dart';
 
 class ProfileController extends GetxController {

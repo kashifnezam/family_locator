@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:family_locator/pages/home.dart';
 import 'package:family_locator/utils/constants.dart';
+import 'package:family_locator/utils/offline_data.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
@@ -28,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
       onLocationLoaded: (location) {
         _currentLocation = location;
         FirebaseApi.updateLocation(
-              _currentLocation.toString(), DeviceInfo.deviceId!);
+            _currentLocation.toString(), DeviceInfo.deviceId!);
       },
       onError: (error) {
         AppConstants.log.e("Error getting location: $error");
@@ -48,9 +49,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> saveUserData() async {
-    await DeviceInfo.getDetails().then((x) {
-      SaveDataApi.saveAnonymousData(DeviceInfo.deviceId, DeviceInfo.macAddress,
-          DeviceInfo.ipAddress, _currentLocation.toString());
+    await DeviceInfo.getDetails().then((x) async {
+      if (await OfflineData.getData("usr") == null) {
+        SaveDataApi.saveAnonymousData(
+            DeviceInfo.deviceId,
+            DeviceInfo.macAddress,
+            DeviceInfo.ipAddress,
+            _currentLocation.toString());
+      }
     });
   }
 

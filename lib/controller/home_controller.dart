@@ -105,7 +105,7 @@ class HomeController extends GetxController {
         .toList();
   }
 
-  void fitMapToBounds() {
+  fitMapToBounds() {
     if (userLocations.isNotEmpty && userLocations.length > 1) {
       final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
       mapController.fitCamera(CameraFit.bounds(

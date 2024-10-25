@@ -217,9 +217,12 @@ class _HomeState extends State<Home> {
           options: MapOptions(
             // cameraConstraint:
             //     CameraConstraint.contain(bounds: MapConstants.maxBounds),
+            interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag),
             minZoom: 0.2,
+            initialRotation: 0,
             backgroundColor: Colors.blue.shade100,
-            // onMapReady: controller.onMapCreated,
+            onMapReady: controller.fitMapToBounds(),
             // initialZoom: controller.zoomLevel.value,
             initialCameraFit: CameraFit.bounds(
               bounds: controller.userLocationBounds ?? MapConstants.indiaBounds,

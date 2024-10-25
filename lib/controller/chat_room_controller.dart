@@ -40,6 +40,7 @@ class ChatRoomController extends GetxController {
   static const int messagesPerPage = 75;
   final ScrollController scrollController = ScrollController();
   RxBool isAtBottom = true.obs; // Reactive variable to track scroll position
+  RxString roomDP = "".obs;
 
   late StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
       locationsSubscription;
@@ -53,10 +54,15 @@ class ChatRoomController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    getDP();
     fetchMessages(initial: true).then((_) => scrollToBottom());
     fetchLocationsAndNotifications();
     scrollController.addListener(_scrollListener);
     listenToMessages(); // Start listening to messages
+  }
+
+  getDP() async {
+    roomDP.value = await FirebaseApi.getDP("roomDetail", roomId);
   }
 
   void _scrollListener() {
@@ -220,8 +226,7 @@ class ChatRoomController extends GetxController {
       membersMap.add({
         "GroupName": roomName,
         "ownerId": owner,
-        "dp": await FirebaseApi.getDP(
-            "roomDetail", roomId), // Optional group profile picture URL
+        "dp": roomDP.value, // Optional group profile picture URL
         "createdAt": "", // Replace with actual date
         "roomId": roomId,
       });

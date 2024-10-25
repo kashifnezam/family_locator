@@ -1,6 +1,7 @@
 import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/pages/home.dart';
 import 'package:family_locator/utils/constants.dart';
+import 'package:family_locator/utils/offline_data.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -60,9 +61,10 @@ class MembersController extends GetxController {
     );
     if (isConfirm) {
       FirebaseApi.exitGroup(membersMap[0]['roomId'], user.value).then(
-        (value) {
+        (value) async {
           if (value == 0) {
-            Get.off(() => Home());
+            FirebaseApi.userJoinLeft("left", membersMap[0]["roomId"], await OfflineData.getData("usr")?? "");
+            Get.offAll(() => Home());
             CustomWidget.confirmDialogue(
               title: "Exited Successfully",
               content:
