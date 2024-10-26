@@ -23,325 +23,268 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: Colors.white, // Change the color of the back arrow
-        ),
-        backgroundColor: Colors.blueGrey,
-        title: GestureDetector(
-          onTap: () => Get.to(() => FamilyRoom()),
-          child: ButtonWidget.elevatedBtn("Family Room",
-              height: AppConstants.height * 0.05),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-              onPressed: () => controller.fitMapToBounds(),
-              icon: Icon(Icons.reset_tv_rounded))
-        ],
-      ),
-      drawer: Drawer(
-        child: Container(
-          color: Colors.blueGrey,
-          child: ListView(
-            children: [
-              DrawerHeader(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Obx(() {
-                        return CircleAvatar(
-                          backgroundColor: Colors.blueGrey,
-                          radius: AppConstants.width * 0.09,
-                          backgroundImage:
-                              controller.dpImagePath.value.isNotEmpty
-                                  ? NetworkImage(controller.dpImagePath.value)
-                                  : null,
-                          child: controller.dpImagePath.value.isEmpty
-                              ? CircleAvatar(
-                                  radius: AppConstants.width * 0.09,
-                                  child: Text(
-                                    controller.username.value
-                                        .toString()
-                                        .toUpperCase()
-                                        .substring(0, 2),
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ) // Show initials if no image
-                              : null,
-                        );
-                      }),
-                    ),
-                    Obx(
-                      () {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              controller.username.value,
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white),
-                            ),
-                            Text(
-                              DeviceInfo.deviceId ?? "xx xxx xxx",
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white70),
-                            ),
-                          ],
-                        );
-                      },
-                    )
-                  ],
-                ),
-              ),
-              ListTile(
-                onTap: () {
-                  Get.back();
-                  Get.to(() => EditProfile());
-                },
-                leading: Icon(
-                  Icons.account_circle_outlined,
-                  color: Colors.white,
-                ),
-                title: Text(
-                  "Profile",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-              ),
-              ListTile(
-                onTap: () {
-                  Get.back();
-                  CustomWidget.roomWidget();
-                },
-                leading: Icon(
-                  Icons.groups_3_sharp,
-                  color: Colors.white,
-                ),
-                title: Text(
-                  "Groups",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.cast_connected,
-                  color: Colors.white70,
-                ),
-                title: Text(
-                  "Connections",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white70),
-                ),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.settings,
-                  color: Colors.white70,
-                ),
-                title: Text(
-                  "Settings",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white70),
-                ),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.account_balance_outlined,
-                  color: Colors.white,
-                ),
-                title: Text(
-                  "Donate",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-              ),
-              Divider(
-                color: Colors.white70,
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.group_add,
-                  color: Colors.white,
-                ),
-                title: Text(
-                  "Invite Friends",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-              ),
-              ListTile(
-                leading: Icon(
-                  Icons.logout_rounded,
-                  color: Colors.white,
-                ),
-                title: Text(
-                  "Logout",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-              ),
-            ],
-          ),
+      appBar: _buildAppBar(),
+      drawer: _buildDrawer(),
+      body: _buildMap(),
+    );
+  }
+
+  // App Bar with Family Room Button and Reset Map View Action
+  AppBar _buildAppBar() {
+    return AppBar(
+      iconTheme: const IconThemeData(color: Colors.white),
+      backgroundColor: Colors.blueGrey,
+      title: GestureDetector(
+        onTap: () => Get.to(() => const FamilyRoom()),
+        child: ButtonWidget.elevatedBtn(
+          "Family Room",
+          height: AppConstants.height * 0.05,
         ),
       ),
-      body: Obx(
-        () => FlutterMap(
-          mapController: controller.mapController,
-          options: MapOptions(
-            // cameraConstraint:
-            //     CameraConstraint.contain(bounds: MapConstants.maxBounds),
-            interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag),
-            minZoom: 0.2,
-            initialRotation: 0,
-            backgroundColor: Colors.blue.shade100,
-            onMapReady: controller.fitMapToBounds(),
-            // initialZoom: controller.zoomLevel.value,
-            initialCameraFit: CameraFit.bounds(
-              bounds: controller.userLocationBounds ?? MapConstants.indiaBounds,
-              padding: const EdgeInsets.all(30),
-            ),
-          ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          onPressed: controller.fitMapToBounds,
+          icon: const Icon(Icons.reset_tv_rounded),
+        ),
+      ],
+    );
+  }
+
+  // Side Drawer with Profile Information and Navigation Options
+  Drawer _buildDrawer() {
+    return Drawer(
+      child: Container(
+        color: Colors.blueGrey,
+        child: ListView(
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              fallbackUrl:
-                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png', // Provide fallback
+            DrawerHeader(
+              child: _buildProfileInfo(),
             ),
-            // PolylineLayer(
-            //   polylines: [
-            //     Polyline(
-            //       points:
-            //           controller.userLocations.values.toList(),
-            //       strokeWidth: 1.0,
-            //       color: Colors.grey,
-            //     ),
-            //     Polyline(
-            //       points: controller.routePoints,
-            //       strokeWidth: 4.0,
-            //       color: Colors.blue,
-            //     ),
-            //   ],
-            // ),
-            Obx(
-              () {
-                return MarkerClusterLayerWidget(
-                  options: MarkerClusterLayerOptions(
-                    inside: true,
-                    centerMarkerOnClick: true,
-                    maxClusterRadius: 45,
-                    size: const Size(40, 40),
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.all(50),
-                    maxZoom: 15,
-                    markers: [
-                      ...controller.userLocations.entries.map((entry) {
-                        final userId = entry.key;
-                        final location = entry.value;
-                        final List<String> usr =
-                            controller.userDetails[userId] ?? [];
-                        final firstLetter = usr[1].isNotEmpty
-                            ? userId == DeviceInfo.deviceId
-                                ? "You"
-                                : usr[1].substring(0, 2).toUpperCase()
-                            : '?';
-                        return Marker(
-                          point: location,
-                          width: 40,
-                          height: 40,
-                          child: GestureDetector(
-                            onDoubleTap: () =>
-                                controller.selectLocation(location),
-                            onTap: () {
-                              CustomWidget.confirmDialogue(
-                                  title: "User Info",
-                                  content:
-                                      "Name: ${usr[1]} \nGroup in common: ${usr.skip(2).join(', ')}",
-                                  isCancel: false);
-                            },
-                            child: Tooltip(
-                              message: usr[1],
-                              child: usr[0] != "" &&
-                                      userId != DeviceInfo.deviceId
-                                  ? CircleAvatar(
-                                      backgroundImage: usr[0] != ""
-                                          ? NetworkImage(usr[0])
-                                          : null,
-                                    )
-                                  : Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.blue),
-                                        color: userId == DeviceInfo.deviceId
-                                            ? Colors.blueGrey
-                                            : Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          firstLetter,
-                                          style: TextStyle(
-                                            color: userId == DeviceInfo.deviceId
-                                                ? Colors.white
-                                                : Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                    builder: (context, markers) {
-                      return Container(
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.blueGrey),
-                            borderRadius: BorderRadius.circular(20),
-                            color: Colors.blue),
-                        child: Center(
-                          child: Text(
-                            markers.length.toString(),
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+            _buildDrawerItem(
+              icon: Icons.account_circle_outlined,
+              label: "Profile",
+              onTap: () => Get.to(() => const EditProfile()),
+            ),
+            _buildDrawerItem(
+              icon: Icons.groups_3_sharp,
+              label: "Groups",
+              onTap: CustomWidget.roomWidget,
+            ),
+            const Divider(color: Colors.white70),
+            _buildDrawerItem(
+              icon: Icons.cast_connected,
+              label: "Connections",
+            ),
+            _buildDrawerItem(
+              icon: Icons.settings,
+              label: "Settings",
+            ),
+            _buildDrawerItem(
+              icon: Icons.account_balance_outlined,
+              label: "Donate",
+            ),
+            _buildDrawerItem(
+              icon: Icons.group_add,
+              label: "Invite Friends",
+            ),
+            _buildDrawerItem(
+              icon: Icons.logout_rounded,
+              label: "Logout",
             ),
           ],
         ),
       ),
     );
+  }
+
+  // Profile information shown in the drawer header
+  Column _buildProfileInfo() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Obx(() => CircleAvatar(
+              backgroundColor: Colors.blueGrey,
+              radius: AppConstants.width * 0.09,
+              backgroundImage: controller.dpImagePath.value.isNotEmpty
+                  ? NetworkImage(controller.dpImagePath.value)
+                  : null,
+              child: controller.dpImagePath.value.isEmpty
+                  ? Text(
+                      controller.username.value.substring(0, 2).toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            )),
+        Obx(() => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  controller.username.value,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                Text(
+                  DeviceInfo.deviceId ?? "Unknown Device",
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white70),
+                ),
+              ],
+            )),
+      ],
+    );
+  }
+
+  // Drawer item with consistent styling
+  ListTile _buildDrawerItem(
+      {required IconData icon, required String label, VoidCallback? onTap}) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: Colors.white),
+      title: Text(
+        label,
+        style: const TextStyle(
+            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+    );
+  }
+
+  // Map display with markers and clustering
+  Widget _buildMap() {
+    return Obx(
+      () => FlutterMap(
+        mapController: controller.mapController,
+        options: MapOptions(
+          interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag),
+          minZoom: 0.2,
+          initialRotation: 0,
+          backgroundColor: Colors.blue.shade100,
+          onMapReady: () async {
+            await Future.delayed(Duration(
+                seconds: 5)); // Delay to ensure the map is fully initialized
+            controller.fitMapToBounds(); // Fit bounds after the delay
+          },
+          initialCameraFit: CameraFit.bounds(
+            bounds: controller.userLocationBounds ?? MapConstants.indiaBounds,
+            padding: const EdgeInsets.all(30),
+          ),
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          ),
+          MarkerClusterLayerWidget(
+            options: MarkerClusterLayerOptions(
+              maxClusterRadius: 45,
+              size: const Size(40, 40),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(50),
+              maxZoom: 15,
+              markers: _buildUserMarkers(),
+              builder: (context, markers) {
+                return Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blueGrey),
+                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.blue,
+                  ),
+                  child: Center(
+                    child: Text(
+                      markers.length.toString(),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Generate user markers for the map
+  // Generate user markers for the map
+  List<Marker> _buildUserMarkers() {
+    return controller.userLocations.entries.map((entry) {
+      final userId = entry.key;
+      final location = entry.value;
+
+      // Check if userDetails has enough elements and set default values if empty
+      final List<String> userDetails = controller.userDetails[userId] ?? [];
+      final String initials = (userDetails.isNotEmpty &&
+              userDetails.length > 1 &&
+              userDetails[1].isNotEmpty)
+          ? (userId == DeviceInfo.deviceId
+              ? "You"
+              : userDetails[1].substring(0, 2).toUpperCase())
+          : '?';
+
+      return Marker(
+        point: location,
+        width: 40,
+        height: 40,
+        child: GestureDetector(
+          onDoubleTap: () => controller.selectLocation(location),
+          onTap: () {
+            // Use a safe access to `userDetails` elements to prevent errors
+            CustomWidget.confirmDialogue(
+              title: "User Info",
+              content: userDetails.isNotEmpty && userDetails.length > 1
+                  ? "Name: ${userDetails[1]}\nGroup: ${userDetails.skip(2).join(', ')}"
+                  : "No user information available.",
+              isCancel: false,
+            );
+          },
+          child: Tooltip(
+            message: userDetails.length > 1 ? userDetails[1] : "Unknown User",
+            child: _buildMarkerContent(initials, userId, userDetails),
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+// Build the marker content based on user details
+  Widget _buildMarkerContent(
+      String initials, String userId, List<String> userDetails) {
+    return userDetails.isNotEmpty &&
+            userDetails[0].isNotEmpty &&
+            userId != DeviceInfo.deviceId
+        ? CircleAvatar(
+            backgroundImage: NetworkImage(userDetails[0]),
+          )
+        : Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.blue),
+              color: userId == DeviceInfo.deviceId
+                  ? Colors.blueGrey
+                  : Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                initials,
+                style: TextStyle(
+                  color: userId == DeviceInfo.deviceId
+                      ? Colors.white
+                      : Colors.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          );
   }
 }

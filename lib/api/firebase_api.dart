@@ -190,9 +190,9 @@ class FirebaseApi {
   static Future<void> userJoinLeft(String status, String roomId, String userId) async {
     final message = MessageModel(
       sender: 'System', // System message to indicate a user joined
-      text: status == "joined" ? 
-                      '${await OfflineData.getData("usr")} added => $userId'
-                      : "$userId left the room",
+      text: status == "joined" ?
+      '${await OfflineData.getData("usr")} added => $userId'
+          : "$userId left the room",
       timestamp: Timestamp.now(),
     );
 
@@ -386,17 +386,45 @@ class FirebaseApi {
 
   // Update RoomName
   static updateRoomName(String roomName, String roomId) async {
-      try {
-        await _firestore.collection('roomDetail').doc(roomId).set({
+    try {
+      await _firestore.collection('roomDetail').doc(roomId).set({
         'roomName': roomName,
         "updated": DateTime.now().toString(),
       }, SetOptions(merge: true));
       AppConstants.log.i('Room Name updated successfully');
       return 0;
-      } catch (e) {
+    } catch (e) {
       AppConstants.log.e('Error updating Room Name of $roomId');
-        CustomWidget.confirmDialogue(title: "Error Updating Name", content: "Error occured while updating Room Name: $roomName of RoomId: $roomId");
+      CustomWidget.confirmDialogue(
+          title: "Error Updating Name",
+          content:
+              "Error occured while updating Room Name: $roomName of RoomId: $roomId");
+    }
+    return -1;
+  }
+
+  Future<Map<String, dynamic>?> getLastMessage(String roomId) async {
+    try {
+      // Query messages in the specified roomId, ordered by timestamp in descending order
+      QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+          .collection('chatrooms')
+          .doc(roomId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
+          .limit(1) // Limit to the latest message
+          .get();
+
+      // Check if there's at least one document in the result
+      if (snapshot.docs.isNotEmpty) {
+        // Extract the data of the last message document
+        return snapshot.docs.first.data();
+      } else {
+        // If no messages found, return null
+        return null;
       }
-      return -1;
+    } catch (e) {
+      print("Error fetching last message for room $roomId: $e");
+      return null;
+    }
   }
 }

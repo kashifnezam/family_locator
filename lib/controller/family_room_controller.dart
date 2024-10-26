@@ -7,7 +7,7 @@ import '../utils/device_info.dart';
 class FamilyRoomController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  RxList<Map<dynamic, dynamic>> roomList = <Map<dynamic, dynamic>>[].obs;
+  RxList<Map<String, dynamic>> roomList = <Map<String, dynamic>>[].obs;
   @override
   void onInit() {
     super.onInit();
@@ -16,27 +16,31 @@ class FamilyRoomController extends GetxController {
 
   void getRoomDetails() async {
     try {
+      // Fetch room IDs for the current user
       List<String> roomIds = await FirebaseApi.getRoomMembers(
           DeviceInfo.deviceId!, "anonymous", "roomId");
-      for (String roomNo in roomIds) {
-        DocumentSnapshot<Map<String, dynamic>> roomDoc =
-            await _firestore.collection("roomDetail").doc(roomNo).get();
-        Map<String, String> field = {};
-        if (roomDoc.exists) {
-          field["roomNo"] = roomNo;
-          field["name"] = roomDoc.data()!.containsKey("roomName")
-              ? roomDoc.get("roomName")
-              : "Unknown";
-          field["dp"] =
-              roomDoc.data()!.containsKey("dp") ? roomDoc.get("dp") : "";
-          field["owner"] = roomDoc.get("owner");
+
+      // Listen for changes in the roomDetail collection
+      _firestore.collection("roomDetail").where(FieldPath.documentId, whereIn: roomIds).snapshots().listen((snapshot) {
+        // Clear previous room details
+        roomList.clear();
+
+        // Process each document in the snapshot
+        for (var doc in snapshot.docs) {
+          Map<String, dynamic> field = {
+            "roomNo": doc.id,
+            "name": doc.data().containsKey("roomName") ? doc.data()["roomName"] : "Unknown",
+            "dp": doc.data().containsKey("dp") ? doc.data()["dp"] : "",
+            "owner": doc.data()["owner"]
+          };
+
+          roomList.add(field);
         }
-        roomList.add(field);
-      }
+      });
     } catch (e) {
       CustomWidget.confirmDialogue(
-        title: "Somethinbg went wrong",
-        content: "Failed to get rooms info, $e",
+        title: "Something went wrong",
+        content: "Failed to get rooms info: $e",
         isCancel: false,
       );
     }

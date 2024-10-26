@@ -91,7 +91,7 @@ class MembersController extends GetxController {
         );
         return;
       } else {
-        String gpName = usn.toLowerCase();
+        String gpName = usn;
         int sts =
             await FirebaseApi.updateRoomName(gpName, membersMap[0]["roomId"]);
         if (sts == 0) {

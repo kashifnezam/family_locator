@@ -78,7 +78,7 @@ class SearchPageState extends State<SearchPage> {
   Future<void> saveUserData() async {
     await DeviceInfo.getDetails().then((x) {
       SaveDataApi.saveAnonymousData(DeviceInfo.deviceId, DeviceInfo.macAddress,
-          DeviceInfo.ipAddress, _currentLocation.toString());
+          DeviceInfo.ipAddress);
     });
   }
 

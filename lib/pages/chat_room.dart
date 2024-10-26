@@ -55,34 +55,34 @@ class ChatRoomState extends State<ChatRoom> {
           centerTitle: true,
           title: Hero(
             tag: "tag${widget.roomId}",
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Obx(
-                  () {
-                    return CircleAvatar(
-                      radius: 19.0, // Inner circle for the image
-                      backgroundImage: controller.roomDP.value != ""
-                          ? NetworkImage(controller.roomDP.value)
-                          : null, // Use network image if available
-                      child: controller.roomDP.value == ""
-                          ? Text(roomSrtName.toUpperCase())
-                          : null,
-                    );
-                  },
-                ),
-                const SizedBox(
-                  width: 6,
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Get.to(() => MembersPage(
-                          initialMembers: controller.membersMap,
-                          user: widget.userId,
-                          isAdmin: false,
-                        ));
-                  },
-                  child: Column(
+            child: GestureDetector(
+              onTap: () {
+                Get.to(() => MembersPage(
+                      initialMembers: controller.membersMap,
+                      user: widget.userId,
+                      isAdmin: false,
+                    ));
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Obx(
+                    () {
+                      return CircleAvatar(
+                        radius: 19.0, // Inner circle for the image
+                        backgroundImage: controller.roomDP.value != ""
+                            ? NetworkImage(controller.roomDP.value)
+                            : null, // Use network image if available
+                        child: controller.roomDP.value == ""
+                            ? Text(roomSrtName.toUpperCase())
+                            : null,
+                      );
+                    },
+                  ),
+                  const SizedBox(
+                    width: 6,
+                  ),
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -97,8 +97,8 @@ class ChatRoomState extends State<ChatRoom> {
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [

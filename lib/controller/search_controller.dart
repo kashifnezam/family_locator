@@ -70,7 +70,7 @@ class SController extends GetxController {
   Future<void> saveUserData() async {
     await DeviceInfo.getDetails().then((x) {
       SaveDataApi.saveAnonymousData(DeviceInfo.deviceId, DeviceInfo.macAddress,
-          DeviceInfo.ipAddress, currentLocation.toString());
+          DeviceInfo.ipAddress);
     });
   }
 }
