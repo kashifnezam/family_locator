@@ -1,6 +1,7 @@
+import 'dart:async';
 import 'dart:io';
-
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:family_locator/api/firebase_tpr_api.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -10,6 +11,22 @@ import 'package:network_info_plus/network_info_plus.dart';
 class LocationUtils {
   static LatLng? _previousLocation;
   static double distanceThreshold = 15.0; // Meters
+  // ignore: constant_identifier_names
+  static const int BATCH_UPLOAD_INTERVAL = 300; // 5 minutes
+  static Timer? _batchUploadTimer;
+
+  /// Call this method when done to stop the batch timer
+  static void dispose() {
+    _batchUploadTimer?.cancel();
+  }
+
+  static void initializeBatchUpload() {
+    _batchUploadTimer = Timer.periodic(
+      Duration(seconds: BATCH_UPLOAD_INTERVAL),
+      (Timer timer) => FirebaseTprApi.uploadBatchLocations(),
+    );
+  }
+
 
   static void getCurrentLocation({
     required Function(LatLng) onLocationLoaded,
@@ -48,17 +65,13 @@ class LocationUtils {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        onError!("Location permissions are denied.");
-      }
+      onError!("Location permissions are permanently denied.");
+      return;
     }
 
     // Start listening for location updates
     Geolocator.getPositionStream(
-      locationSettings: AppleSettings(
-        accuracy: LocationAccuracy.best,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.best),
     ).listen((Position position) {
       LatLng currentLocation = LatLng(position.latitude, position.longitude);
 
@@ -71,13 +84,11 @@ class LocationUtils {
                 currentLocation.longitude,
               ) >=
               distanceThreshold) {
-        onStartMoving!();
+        onStartMoving?.call();
+       FirebaseTprApi.bufferLocationUpdate(currentLocation);
       }
 
-      // Update the previous location
       _previousLocation = currentLocation;
-
-      // Convert to LatLng and call the callback
       onLocationLoaded(currentLocation);
     }, onError: (e) {
       onError!("Error getting live location: $e");

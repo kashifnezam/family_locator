@@ -142,7 +142,7 @@ class MembersPage extends StatelessWidget {
             Obx(() {
               return CircleAvatar(
                 backgroundColor: Colors.blueGrey,
-                radius: AppConstants.width * 0.2,
+                radius: AppConstants.width * 0.3,
                 backgroundImage: controller.dpImagePath.value.isNotEmpty
                     ? (controller.dpImagePath.value.startsWith('http')
                         ? NetworkImage(
@@ -152,7 +152,7 @@ class MembersPage extends StatelessWidget {
                     : null,
                 child: controller.dpImagePath.value.isEmpty
                     ? CircleAvatar(
-                        radius: AppConstants.width * 0.2,
+                        radius: AppConstants.width * 0.3,
                         child: Text(
                           controller.groupName.value
                               .substring(0, 2)
@@ -203,7 +203,7 @@ class MembersPage extends StatelessWidget {
     );
   }
 
- 
+
   Widget _buildMemberList() {
     return ListView.builder(
       itemCount: controller.membersMap.length - 1, // Exclude group info

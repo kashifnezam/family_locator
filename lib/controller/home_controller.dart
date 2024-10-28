@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/utils/location_utils.dart';
 import 'package:flutter/material.dart';
@@ -105,7 +104,6 @@ class HomeController extends GetxController {
         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 0),
       ));
     }
-    AppConstants.log.e("hera");
   }
 
   getUserNameDP() async {

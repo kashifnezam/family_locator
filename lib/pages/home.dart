@@ -1,5 +1,6 @@
 import 'package:family_locator/controller/home_controller.dart';
 import 'package:family_locator/pages/family_room.dart';
+import 'package:family_locator/pages/settings.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:get/get.dart';
 import '../utils/device_info.dart';
 import '../widgets/button_widget.dart';
 import 'edit_profile.dart';
+import 'history_tpr.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -64,32 +66,42 @@ class _HomeState extends State<Home> {
             _buildDrawerItem(
               icon: Icons.account_circle_outlined,
               label: "Profile",
-              onTap: () => Get.to(() => const EditProfile()),
+              onTap: () {
+                Get.back();
+                Get.to(() => const EditProfile());
+              },
             ),
             _buildDrawerItem(
               icon: Icons.groups_3_sharp,
               label: "Groups",
-              onTap: CustomWidget.roomWidget,
+              onTap: () {
+                Get.back();
+                CustomWidget.roomWidget();
+              },
             ),
-            const Divider(color: Colors.white70),
             _buildDrawerItem(
               icon: Icons.cast_connected,
+              color: Colors.white70,
               label: "Connections",
             ),
             _buildDrawerItem(
               icon: Icons.settings,
               label: "Settings",
+              onTap: () => Get.to(() => const SettingsPage()),
             ),
             _buildDrawerItem(
               icon: Icons.account_balance_outlined,
               label: "Donate",
+              // onTap: () => Get.to(() => HistoryTPR()),
             ),
+            const Divider(color: Colors.white70),
             _buildDrawerItem(
               icon: Icons.group_add,
               label: "Invite Friends",
             ),
             _buildDrawerItem(
               icon: Icons.logout_rounded,
+              color: Colors.white70,
               label: "Logout",
             ),
           ],
@@ -106,7 +118,7 @@ class _HomeState extends State<Home> {
       children: [
         Obx(() => CircleAvatar(
               backgroundColor: Colors.blueGrey,
-              radius: AppConstants.width * 0.09,
+              radius: AppConstants.width * 0.12,
               backgroundImage: controller.dpImagePath.value.isNotEmpty
                   ? NetworkImage(controller.dpImagePath.value)
                   : null,
@@ -146,14 +158,17 @@ class _HomeState extends State<Home> {
 
   // Drawer item with consistent styling
   ListTile _buildDrawerItem(
-      {required IconData icon, required String label, VoidCallback? onTap}) {
+      {required IconData icon,
+      Color color = Colors.white,
+      required String label,
+      VoidCallback? onTap}) {
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: Colors.white),
+      leading: Icon(icon, color: color),
       title: Text(
         label,
-        style: const TextStyle(
-            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+        style:
+            TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
       ),
     );
   }
@@ -215,7 +230,6 @@ class _HomeState extends State<Home> {
   }
 
   // Generate user markers for the map
-  // Generate user markers for the map
   List<Marker> _buildUserMarkers() {
     return controller.userLocations.entries.map((entry) {
       final userId = entry.key;
@@ -238,14 +252,18 @@ class _HomeState extends State<Home> {
         child: GestureDetector(
           onDoubleTap: () => controller.selectLocation(location),
           onTap: () {
+            Get.to(() => HistoryTPR(
+                  userId: userId,
+                  userDetails: userDetails,
+                ));
             // Use a safe access to `userDetails` elements to prevent errors
-            CustomWidget.confirmDialogue(
-              title: "User Info",
-              content: userDetails.isNotEmpty && userDetails.length > 1
-                  ? "Name: ${userDetails[1]}\nGroup: ${userDetails.skip(2).join(', ')}"
-                  : "No user information available.",
-              isCancel: false,
-            );
+            // CustomWidget.confirmDialogue(
+            //   title: "User Info",
+            //   content: userDetails.isNotEmpty && userDetails.length > 1
+            //       ? "Name: ${userDetails[1]}\nGroup: ${userDetails.skip(2).join(', ')}"
+            //       : "No user information available.",
+            //   isCancel: false,
+            // );
           },
           child: Tooltip(
             message: userDetails.length > 1 ? userDetails[1] : "Unknown User",

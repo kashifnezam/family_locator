@@ -127,7 +127,7 @@ class _EditProfileState extends State<EditProfile> {
             Obx(() {
               return CircleAvatar(
                 backgroundColor: Colors.blueGrey,
-                radius: AppConstants.width * 0.2,
+                radius: AppConstants.width * 0.3,
                 backgroundImage: _controller.dpImagePath.value.isNotEmpty
                     ? (_controller.dpImagePath.value.startsWith('http')
                         ? NetworkImage(
@@ -137,7 +137,7 @@ class _EditProfileState extends State<EditProfile> {
                     : null,
                 child: _controller.dpImagePath.value.isEmpty
                     ? CircleAvatar(
-                        radius: AppConstants.width * 0.2,
+                        radius: AppConstants.width * 0.3,
                         child: const Text(
                           "MK",
                           style: TextStyle(
@@ -160,7 +160,7 @@ class _EditProfileState extends State<EditProfile> {
   /// Builds the edit icon that appears on the profile picture.
   Widget _buildEditIcon() {
     return Positioned(
-      bottom: 10,
+      bottom: 20,
       right: 10,
       child: GestureDetector(
         onTap: () async {

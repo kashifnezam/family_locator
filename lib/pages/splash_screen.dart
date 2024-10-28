@@ -24,6 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     saveUserData();
+    LocationUtils.initializeBatchUpload();
 
     LocationUtils.getCurrentLocation(
       onLocationLoaded: (location) {
