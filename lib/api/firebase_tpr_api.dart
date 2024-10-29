@@ -70,7 +70,7 @@ class FirebaseTprApi {
 
 // Method to retrieve location updates for a specific user
   static Future<List<Map<String, dynamic>>> getLocationHistory(
-      String userId) async {
+      String userId, int dayOffset) async {
     try {
       // Reference to the user's locations subcollection
       final locationsCollection = FirebaseFirestore.instance
@@ -78,8 +78,17 @@ class FirebaseTprApi {
           .doc(userId)
           .collection('locations');
 
-      // Retrieve the documents in the collection ordered by timestamp
+      // Calculate the start and end times based on dayOffset
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day - dayOffset);
+      final endOfDay =
+          DateTime(now.year, now.month, now.day - dayOffset, 23, 59, 59);
+
+      // Retrieve documents within the specified date range, ordered by timestamp
       final snapshot = await locationsCollection
+          .where('timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
           .orderBy('timestamp', descending: true)
           .get();
 

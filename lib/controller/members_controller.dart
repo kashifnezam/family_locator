@@ -1,6 +1,7 @@
 import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/pages/home.dart';
 import 'package:family_locator/utils/constants.dart';
+import 'package:family_locator/utils/custom_alert.dart';
 import 'package:family_locator/utils/offline_data.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
@@ -53,27 +54,45 @@ class MembersController extends GetxController {
     }
   }
 
-  Future<void> exitGroup() async {
-    bool isConfirm = await CustomWidget.confirmDialogue(
-      title: "Leave Room",
-      content: "Are you sure want to leave \"${membersMap[0]['GroupName']}\"",
-      isCancel: true,
+  Future<void> exitGroup(BuildContext context) async {
+    bool isConfirm = await CustomAlert.confirmAlert(
+      context,
+      "Are you sure you want to leave \"${membersMap[0]['GroupName']}\"?",
     );
+
     if (isConfirm) {
-      FirebaseApi.exitGroup(membersMap[0]['roomId'], user.value).then(
-        (value) async {
-          if (value == 0) {
-            FirebaseApi.userJoinLeft("left", membersMap[0]["roomId"], await OfflineData.getData("usr")?? "");
-            Get.offAll(() => Home());
-            CustomWidget.confirmDialogue(
-              title: "Exited Successfully",
-              content:
-                  "You are exited from Group : ${membersMap[0]['GroupName']}",
-              isCancel: false,
-            );
-          }
-        },
-      );
+      // ignore: use_build_context_synchronously
+      CustomAlert.loadAlert(context, "Please wait...");
+
+      try {
+        final value =
+            await FirebaseApi.exitGroup(membersMap[0]['roomId'], user.value);
+
+        if (value == 0) {
+          await FirebaseApi.userJoinLeft(
+            "left",
+            membersMap[0]["roomId"],
+            await OfflineData.getData("usr") ?? "",
+          );
+
+          Get.offAll(() => Home());
+          CustomAlert.successAlert(
+            // ignore: use_build_context_synchronously
+            context,
+            "You have exited from Room: ${membersMap[0]['GroupName']}",
+          );
+        } else {
+          // ignore: use_build_context_synchronously
+          CustomAlert.errorAlert(context, "Failed to exit the group.");
+        }
+      } catch (e) {
+        // ignore: use_build_context_synchronously
+        CustomAlert.errorAlert(context, "An error occurred: $e");
+      } finally {
+        // Dismiss the loading alert regardless of success or failure
+        // ignore: use_build_context_synchronously
+        CustomAlert.dismissAlert(context);
+      }
     }
   }
 

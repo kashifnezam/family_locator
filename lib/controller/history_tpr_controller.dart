@@ -4,6 +4,7 @@ import 'package:family_locator/api/firebase_tpr_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
 class HistoryTPRController extends GetxController {
@@ -13,8 +14,27 @@ class HistoryTPRController extends GetxController {
   RxList<Map<String, dynamic>> arrowMarkers = <Map<String, dynamic>>[].obs;
   final String userId;
   RxBool isLoading = true.obs;
-
+  RxBool isCal = false.obs;
   HistoryTPRController({required this.userId});
+  RxString selectedDate = ''.obs; // Observable for selected date
+
+
+  bool isDateEnabled(DateTime date) {
+    // Enable only today, yesterday, and the day before yesterday
+    DateTime today = DateTime.now();
+    return date.isAfter(today.subtract(Duration(days: 3))) &&
+        date.isBefore(today.add(Duration(days: 1)));
+  }
+
+  List<String> getAvailableDates() {
+    // Return formatted strings for today, yesterday, and day before yesterday
+    DateTime today = DateTime.now();
+    return [
+      DateFormat('yyyy-MM-dd').format(today),
+      DateFormat('yyyy-MM-dd').format(today.subtract(Duration(days: 1))),
+      DateFormat('yyyy-MM-dd').format(today.subtract(Duration(days: 2))),
+    ];
+  }
 
   @override
   void onInit() {
@@ -22,8 +42,9 @@ class HistoryTPRController extends GetxController {
     getTPR();
   }
 
-  getTPR() async {
-    final locationHistoryData = await FirebaseTprApi.getLocationHistory(userId);
+  getTPR({int offset = 0}) async {
+    final locationHistoryData =
+        await FirebaseTprApi.getLocationHistory(userId, offset);
 
     // Map each location entry to a LatLng object
     polylinePoints.value = locationHistoryData.map((location) {

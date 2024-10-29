@@ -507,86 +507,89 @@ class ChatRoomState extends State<ChatRoom> {
                               return Hero(
                                 tag: 'tagId$index',
                                 child: Container(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 6),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 12, horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.amberAccent.shade100,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                          child: Obx(
-                                        () => Text(
-                                          controller.userNames[id] ??
-                                              id, // Notification content
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      )),
-                                      Row(
-                                        children: [
-                                          IconButton(
-                                            onPressed: () {
-                                              FirebaseApi
-                                                  .modifyDeviceInCollection(
-                                                      "roomDetail",
-                                                      widget.roomId,
-                                                      id,
-                                                      "members",
-                                                      true);
-                                              FirebaseApi
-                                                  .modifyDeviceInCollection(
-                                                      "roomDetail",
-                                                      widget.roomId,
-                                                      id,
-                                                      "pending",
-                                                      false);
-                                              FirebaseApi
-                                                  .modifyDeviceInCollection(
-                                                      "anonymous",
-                                                      id,
-                                                      widget.roomId,
-                                                      "roomId",
-                                                      true);
-                                              FirebaseApi.userJoinLeft(
-                                                  "joined",
-                                                  widget.roomId,
-                                                  controller.userNames[id] ??
-                                                      id);
-                                            },
-                                            icon: const Icon(
-                                              Icons.check,
-                                              color: Colors.greenAccent,
+                                    margin:
+                                        const EdgeInsets.symmetric(vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12, horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amberAccent.shade100,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Obx(
+                                      () {
+                                        return Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                controller.userNames[id] ??
+                                                    id, // Notification content
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            onPressed: () {
-                                              FirebaseApi
-                                                  .modifyDeviceInCollection(
-                                                      "roomDetail",
-                                                      widget.roomId,
-                                                      id,
-                                                      "pending",
-                                                      false);
-                                            },
-                                            icon: const Icon(
-                                              Icons.close,
-                                              color: Colors.redAccent,
+                                            Row(
+                                              children: [
+                                                IconButton(
+                                                  onPressed: () {
+                                                    FirebaseApi
+                                                        .modifyDeviceInCollection(
+                                                            "roomDetail",
+                                                            widget.roomId,
+                                                            id,
+                                                            "members",
+                                                            true);
+                                                    FirebaseApi
+                                                        .modifyDeviceInCollection(
+                                                            "roomDetail",
+                                                            widget.roomId,
+                                                            id,
+                                                            "pending",
+                                                            false);
+                                                    FirebaseApi
+                                                        .modifyDeviceInCollection(
+                                                            "anonymous",
+                                                            id,
+                                                            widget.roomId,
+                                                            "roomId",
+                                                            true);
+                                                    FirebaseApi.userJoinLeft(
+                                                        "joined",
+                                                        widget.roomId,
+                                                        controller.userNames[
+                                                                id] ??
+                                                            id);
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.check,
+                                                    color: Colors.greenAccent,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                IconButton(
+                                                  onPressed: () {
+                                                    FirebaseApi
+                                                        .modifyDeviceInCollection(
+                                                            "roomDetail",
+                                                            widget.roomId,
+                                                            id,
+                                                            "pending",
+                                                            false);
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.close,
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                          ],
+                                        );
+                                      },
+                                    )),
                               );
                             },
                           ),

@@ -119,7 +119,7 @@ class MembersPage extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: GestureDetector(
                 onTap: () {
-                  controller.exitGroup();
+                  controller.exitGroup(context);
                 },
                 child: ButtonWidget.elevatedBtn("Exit Group",
                     borderColor: Colors.red),

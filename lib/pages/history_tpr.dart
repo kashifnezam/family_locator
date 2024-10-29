@@ -3,7 +3,7 @@ import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
-
+import 'package:intl/intl.dart';
 import '../controller/history_tpr_controller.dart';
 
 class HistoryTPR extends StatelessWidget {
@@ -14,15 +14,47 @@ class HistoryTPR extends StatelessWidget {
   HistoryTPR({super.key, required this.userId, required this.userDetails})
       : controller = Get.put(
             HistoryTPRController(userId: userId)); // Initialize controller here
+
+  //------------ Get Week Day ----------
+  String getWeekdayAbbreviation(DateTime date) {
+    return DateFormat('EEEE')
+        .format(date); // 'EEE' gives abbreviated day names like Mon, Tue, etc.
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: ListTile(
           title: Text(userDetails.length > 1 ? userDetails[1] : "Unknown User"),
-          subtitle: Text("History of Last 3 days"),
+          subtitle: Obx(
+            () => Text("History of ${controller.selectedDate.value}"),
+          ),
         ),
         centerTitle: true,
+        actions: [
+          ElevatedButton(
+            onPressed: () async {
+              DateTime today = DateTime.now();
+              DateTime? pickedDate = await showDatePicker(
+                context: context,
+                initialDate: today,
+                firstDate: today.subtract(
+                    Duration(days: 2)), // Allow selection of last three days
+                lastDate: today, // Disable future dates
+              );
+
+              if (pickedDate != null && controller.isDateEnabled(pickedDate)) {
+                controller.selectedDate(getWeekdayAbbreviation(pickedDate));
+                int difference = today.difference(pickedDate).inDays;
+                controller.isLoading.value = true;
+                controller.getTPR(offset: difference);
+                controller.isLoading.value = false;
+              }
+            },
+            child: Icon(Icons.calendar_month),
+          ),
+        ],
       ),
       body: Obx(() {
         return Stack(
@@ -51,10 +83,11 @@ class HistoryTPR extends StatelessWidget {
                 PolylineLayer(
                   polylines: [
                     Polyline(
-                        points: controller.polylinePoints,
-                        strokeWidth: 3.0,
-                        color: Colors.blue,
-                        pattern: StrokePattern.dashed(segments: [1, 4])),
+                      points: controller.polylinePoints,
+                      strokeWidth: 3.0,
+                      color: Colors.blue,
+                      // pattern: StrokePattern.dashed(segments: [1, 4]),
+                    ),
                   ],
                 ),
                 MarkerLayer(
