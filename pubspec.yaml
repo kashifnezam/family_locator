@@ -54,7 +54,11 @@ dependencies:
   flutter_sticky_header: ^0.6.5
   connectivity_plus: ^6.0.3
   quickalert: ^1.1.0 #Alert Popup when success or failure
-
+  omni_datetime_picker: ^2.0.5
+  qr_flutter: ^4.1.0 # Check for the latest version
+  # share_plus: ^10.1.1 # Check for the latest version
+  # path_provider: ^2.1.5 # For saving files
+  # image_gallery_saver: ^2.0.3 # For saving images to gallery
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6

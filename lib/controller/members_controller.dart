@@ -1,147 +1,143 @@
-import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/pages/home.dart';
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/utils/custom_alert.dart';
-import 'package:family_locator/utils/offline_data.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import '../api/firebase_api.dart';
 import '../api/firebase_file_api.dart';
+import '../utils/custom_alert.dart';
 import '../utils/device_info.dart';
+import '../utils/offline_data.dart';
+import '../widgets/custom_widget.dart';
+import '../pages/home.dart';
 
 class MembersController extends GetxController {
-  var membersMap = <Map<String, dynamic>>[].obs; // Observable list of maps
-  var groupName = ''.obs; // Observable for group name
+  RxList<Map<String, dynamic>> membersMap = <Map<String, dynamic>>[].obs;
+  RxString groupName = ''.obs;
   RxString user = ''.obs;
   RxBool isAdmin = false.obs;
-  RxString dpImagePath = "".obs;
-  RxString finalDpImagePath = "".obs;
+  RxString dpImagePath = ''.obs;
+  RxString finalDpImagePath = ''.obs;
   RxBool groupNameEdit = false.obs;
   RxBool isLoad = false.obs;
-  final groupNameController = TextEditingController();
-  final isValid = true.obs;
-  final RxString isNotValidMsg = "".obs;
+  RxBool isValid = true.obs;
+  RxString isNotValidMsg = ''.obs;
 
+  final TextEditingController groupNameController = TextEditingController();
+
+  // Set members data and initialize controller values
   void setMembers(List<Map<String, dynamic>> newMembers) {
-    membersMap.assignAll(newMembers); // Update the members map
-    groupName.value = newMembers[0]['GroupName']; // Set initial group name
+    membersMap.assignAll(newMembers);
+    groupName.value = newMembers[0]['GroupName'];
     groupNameController.text = groupName.value;
     dpImagePath.value = newMembers[0]['dp'];
     finalDpImagePath.value = newMembers[0]['dp'];
   }
 
+  // Update group name in both groupName observable and membersMap
   void updateGroupName(String newName) {
-    groupName.value = newName; // Update group name
-    membersMap[0]['GroupName'] = newName; // Update in the members map
+    groupName.value = newName;
+    membersMap[0]['GroupName'] = newName;
   }
 
+  // Remove a member at a specified index
   void removeMember(int index) {
     if (index > 0 && index < membersMap.length) {
-      membersMap.removeAt(index); // Remove member from the list
+      membersMap.removeAt(index);
     }
   }
 
-  void promoteToAdmin(int index) {
+  // Update admin status for a member
+  void toggleAdminStatus(int index, bool isPromoting) {
     if (index > 0 && index < membersMap.length) {
-      membersMap[index]['isAdmin'] = true; // Promote member to admin
+      membersMap[index]['isAdmin'] = isPromoting;
     }
   }
 
-  void discardAdmin(int index) {
-    if (index > 0 && index < membersMap.length) {
-      membersMap[index]['isAdmin'] = false; // Discard admin status
-    }
-  }
-
-  Future<void> exitGroup(BuildContext context) async {
-    bool isConfirm = await CustomAlert.confirmAlert(
-      context,
-      "Are you sure you want to leave \"${membersMap[0]['GroupName']}\"?",
-    );
-
-    if (isConfirm) {
-      // ignore: use_build_context_synchronously
-      CustomAlert.loadAlert(context, "Please wait...");
+  // Handle user group exit with confirmation and alert dialogs
+  Future<int> exitGroup(BuildContext context) async {
+    if (await CustomAlert.confirmAlert(context,
+        "Are you sure you want to leave \"${membersMap[0]['GroupName']}\"?")) {
+      if (context.mounted) CustomAlert.loadAlert(context, "Please wait...");
 
       try {
         final value =
             await FirebaseApi.exitGroup(membersMap[0]['roomId'], user.value);
 
         if (value == 0) {
-          await FirebaseApi.userJoinLeft(
-            "left",
-            membersMap[0]["roomId"],
-            await OfflineData.getData("usr") ?? "",
-          );
-
+          await FirebaseApi.userJoinLeft("left", membersMap[0]["roomId"],
+              await OfflineData.getData("usr") ?? "");
           Get.offAll(() => Home());
-          CustomAlert.successAlert(
-            // ignore: use_build_context_synchronously
-            context,
-            "You have exited from Room: ${membersMap[0]['GroupName']}",
-          );
-        } else {
-          // ignore: use_build_context_synchronously
-          CustomAlert.errorAlert(context, "Failed to exit the group.");
+          return 0;
         }
       } catch (e) {
-        // ignore: use_build_context_synchronously
-        CustomAlert.errorAlert(context, "An error occurred: $e");
+        if (context.mounted) {
+          CustomAlert.errorAlert(context, "An error occurred: $e");
+        }
       } finally {
-        // Dismiss the loading alert regardless of success or failure
-        // ignore: use_build_context_synchronously
-        CustomAlert.dismissAlert(context);
+        if (context.mounted) {
+          CustomAlert.dismissAlert(context);
+        }
+      }
+    }
+    return -1;
+  }
+
+  // Submit form and update group data accordingly
+  Future<void> submitForm() async {
+    isLoad.value = true;
+    final groupNameInput = groupNameController.text.trim();
+
+    if (_isValidGroupName(groupNameInput)) {
+      await _updateGroupName(groupNameInput);
+      await _updateGroupDpImage();
+    } else {
+      isValid.value = false;
+      isNotValidMsg.value =
+          "Please enter a valid group name (3-15 alphanumeric characters).";
+    }
+
+    isLoad.value = false;
+  }
+
+  // Validate group name length and content
+  bool _isValidGroupName(String name) {
+    return name.length >= 3 && name.length <= 15 && name != groupName.value;
+  }
+
+  // Update group name in Firebase and locally if valid
+  Future<void> _updateGroupName(String name) async {
+    if (name != groupName.value) {
+      int status =
+          await FirebaseApi.updateRoomName(name, membersMap[0]["roomId"]);
+      if (status == 0) {
+        groupName.value = name;
+      } else {
+        isValid.value = false;
+        isNotValidMsg.value = "Error updating group name.";
       }
     }
   }
 
-  Future<void> submitForm() async {
-    isLoad.value = true;
-    String usn = groupNameController.text.trim();
-    AppConstants.log.e(groupName.value);
-    if (usn != groupName.value) {
-      if ((usn.length < 3 || usn.length > 15) &&
-          (usn.isEmpty || usn != groupName.value)) {
-        Get.snackbar(
-          backgroundColor: Colors.red.shade100,
-          'Error',
-          'Please enter valid Alphanumeric groupName not more than 15 letters',
-        );
-        return;
-      } else {
-        String gpName = usn;
-        int sts =
-            await FirebaseApi.updateRoomName(gpName, membersMap[0]["roomId"]);
-        if (sts == 0) {
-          groupName.value = gpName;
-        } else {
-          isValid.value = false;
-          isNotValidMsg.value = "Something went wrong";
-        }
-      }
-    }
-
+  // Update group profile image in Firebase and locally
+  Future<void> _updateGroupDpImage() async {
     if (dpImagePath.value.isNotEmpty &&
         dpImagePath.value != finalDpImagePath.value) {
       String url = await FirebaseFileApi.uploadImage(
           "${DeviceInfo.deviceId}+${groupName.value}", dpImagePath.value, "dp");
+
       if (url.isNotEmpty) {
-        int res = await FirebaseFileApi.updateImagePath(
+        int result = await FirebaseFileApi.updateImagePath(
             "roomDetail", membersMap[0]["roomId"], url, "dp");
-        if (res == 0) {
+        if (result == 0) {
           dpImagePath.value = url;
           finalDpImagePath.value = url;
           CustomWidget.confirmDialogue(
             title: "Room Updated Successfully",
-            content: "Please Restart the app to get changes",
+            content: "Please restart the app to see changes.",
             isCancel: false,
           );
         } else {
           dpImagePath.value = "";
         }
-      } else {}
+      }
     }
-    isLoad.value = false;
   }
 }

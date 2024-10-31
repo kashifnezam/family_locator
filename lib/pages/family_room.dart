@@ -76,8 +76,9 @@ class FamilyRoom extends StatelessWidget {
   Widget _buildRoomAvatar(Map<String, dynamic> room, String roomSrtName) {
     return CircleAvatar(
       radius: AppConstants.width * 0.05,
-      backgroundImage: room["dp"].isNotEmpty ? NetworkImage(room["dp"]) : null,
-      child: room["dp"].isEmpty ? Text(roomSrtName.toUpperCase()) : null,
+      child: room["dp"].isEmpty
+          ? Text(roomSrtName.toUpperCase())
+          : CustomWidget.getImage(room["dp"]),
     );
   }
 

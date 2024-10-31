@@ -423,7 +423,7 @@ class FirebaseApi {
         return null;
       }
     } catch (e) {
-      print("Error fetching last message for room $roomId: $e");
+      AppConstants.log.e("Error fetching last message for room $roomId: $e");
       return null;
     }
   }

@@ -15,42 +15,32 @@ class HistoryTPRController extends GetxController {
   final String userId;
   RxBool isLoading = true.obs;
   RxBool isCal = false.obs;
+  RxList<String> markerInfo = <String>[].obs;
+
   HistoryTPRController({required this.userId});
-  RxString selectedDate = ''.obs; // Observable for selected date
-
-
-  bool isDateEnabled(DateTime date) {
-    // Enable only today, yesterday, and the day before yesterday
-    DateTime today = DateTime.now();
-    return date.isAfter(today.subtract(Duration(days: 3))) &&
-        date.isBefore(today.add(Duration(days: 1)));
-  }
-
-  List<String> getAvailableDates() {
-    // Return formatted strings for today, yesterday, and day before yesterday
-    DateTime today = DateTime.now();
-    return [
-      DateFormat('yyyy-MM-dd').format(today),
-      DateFormat('yyyy-MM-dd').format(today.subtract(Duration(days: 1))),
-      DateFormat('yyyy-MM-dd').format(today.subtract(Duration(days: 2))),
-    ];
-  }
-
   @override
   void onInit() {
     super.onInit();
     getTPR();
   }
 
-  getTPR({int offset = 0}) async {
+  void getTPR({List<DateTime> dateRange = const []}) async {
     final locationHistoryData =
-        await FirebaseTprApi.getLocationHistory(userId, offset);
-
+        await FirebaseTprApi.getLocationHistory(userId, dateRange: dateRange);
     // Map each location entry to a LatLng object
     polylinePoints.value = locationHistoryData.map((location) {
       final locationData = location['location'];
       return LatLng(locationData['latitude'], locationData['longitude']);
     }).toList();
+
+    //String Time for Markers:
+    if (locationHistoryData.isNotEmpty) {
+      markerInfo.clear();
+      markerInfo.add(DateFormat('dd-MM-yyyy hh:mm a')
+          .format(locationHistoryData.last["timestamp"]));
+      markerInfo.add(DateFormat('dd-MM-yyyy hh:mm a')
+          .format(locationHistoryData.first["timestamp"]));
+    }
 
     fitMapToBounds();
     calculateArrowMarkers();

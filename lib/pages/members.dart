@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controller/members_controller.dart';
+import '../utils/custom_alert.dart';
 import '../widgets/custom_widget.dart';
 
 late bool isOwner;
@@ -118,8 +117,15 @@ class MembersPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: GestureDetector(
-                onTap: () {
-                  controller.exitGroup(context);
+                onTap: () async {
+                  await controller.exitGroup(context).then(
+                    (value) {
+                      if (context.mounted) {
+                        CustomAlert.successAlert(context,
+                            "You have exited from Room: ${controller.membersMap[0]['GroupName']}");
+                      }
+                    },
+                  );
                 },
                 child: ButtonWidget.elevatedBtn("Exit Group",
                     borderColor: Colors.red),
@@ -143,13 +149,6 @@ class MembersPage extends StatelessWidget {
               return CircleAvatar(
                 backgroundColor: Colors.blueGrey,
                 radius: AppConstants.width * 0.3,
-                backgroundImage: controller.dpImagePath.value.isNotEmpty
-                    ? (controller.dpImagePath.value.startsWith('http')
-                        ? NetworkImage(
-                            controller.dpImagePath.value) // If it's a URL
-                        : FileImage(File(controller
-                            .dpImagePath.value))) // If it's a local file
-                    : null,
                 child: controller.dpImagePath.value.isEmpty
                     ? CircleAvatar(
                         radius: AppConstants.width * 0.3,
@@ -164,7 +163,7 @@ class MembersPage extends StatelessWidget {
                           ),
                         ),
                       ) // Show initials if no image
-                    : null,
+                    : CustomWidget.getImage(controller.dpImagePath.value),
               );
             }),
             _buildEditIcon(),
@@ -212,12 +211,9 @@ class MembersPage extends StatelessWidget {
             controller.membersMap[index + 1]; // Skip group info at index 0
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: member['profileUrl'] != ""
-                ? NetworkImage(member['profileUrl'])
-                : null,
             child: member['profileUrl'] == ""
                 ? const Icon(Icons.person_4_outlined)
-                : null,
+                : CustomWidget.getImage(member['profileUrl']),
           ),
           title: Text(member['name']),
           subtitle: Text(
@@ -256,7 +252,7 @@ class MembersPage extends StatelessWidget {
                 leading: const Icon(Icons.admin_panel_settings),
                 title: const Text('Set as Admin'),
                 onTap: () {
-                  controller.promoteToAdmin(memberIndex);
+                  // controller.promoteToAdmin(memberIndex);
                   Get.back(); // Close the modal
                 },
               ),
@@ -266,7 +262,7 @@ class MembersPage extends StatelessWidget {
                 leading: const Icon(Icons.cancel),
                 title: const Text('Discard Admin'),
                 onTap: () {
-                  controller.discardAdmin(memberIndex);
+                  // controller.discardAdmin(memberIndex);
                   Get.back(); // Close the modal
                 },
               ),

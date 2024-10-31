@@ -69,45 +69,54 @@ class FirebaseTprApi {
   }
 
 // Method to retrieve location updates for a specific user
-  static Future<List<Map<String, dynamic>>> getLocationHistory(
-      String userId, int dayOffset) async {
-    try {
-      // Reference to the user's locations subcollection
-      final locationsCollection = FirebaseFirestore.instance
-          .collection('History_TPR')
-          .doc(userId)
-          .collection('locations');
 
-      // Calculate the start and end times based on dayOffset
+static Future<List<Map<String, dynamic>>> getLocationHistory(
+    String userId, {List<DateTime>? dateRange}) async {
+  try {
+    // Determine start and end dates based on the dateRange parameter
+    DateTime startDate;
+    DateTime endDate;
+
+    if (dateRange != null && dateRange.length == 2) {
+      // Use the provided DateTime objects as start and end dates
+      startDate = dateRange[0];
+      endDate = dateRange[1];
+    } else {
+      // Default to today's date range if dateRange is not provided
       final now = DateTime.now();
-      final startOfDay = DateTime(now.year, now.month, now.day - dayOffset);
-      final endOfDay =
-          DateTime(now.year, now.month, now.day - dayOffset, 23, 59, 59);
-
-      // Retrieve documents within the specified date range, ordered by timestamp
-      final snapshot = await locationsCollection
-          .where('timestamp',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
-          .orderBy('timestamp', descending: true)
-          .get();
-
-      // Convert each document snapshot into a map with its data
-      final locationHistory = snapshot.docs.map((doc) {
-        return {
-          'location': doc['location'],
-          'timestamp': (doc['timestamp'] as Timestamp).toDate(),
-        };
-      }).toList();
-
-      return locationHistory;
-    } catch (e) {
-      AppConstants.log.e("Error fetching location history: $e");
-      return [];
+      startDate = DateTime(now.year, now.month, now.day);
+      endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
     }
-  }
 
-  /// Buffer location updates and batch upload every 5 minutes
+    // Reference to the user's locations subcollection
+    final locationsCollection = FirebaseFirestore.instance
+        .collection('History_TPR')
+        .doc(userId)
+        .collection('locations');
+
+    // Retrieve documents within the specified date range, ordered by timestamp
+    final snapshot = await locationsCollection
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+        .orderBy('timestamp', descending: true)
+        .get();
+
+    // Convert each document snapshot into a map with its data
+    final locationHistory = snapshot.docs.map((doc) {
+      return {
+        'location': doc['location'],
+        'timestamp': (doc['timestamp'] as Timestamp).toDate(),
+      };
+    }).toList();
+
+    return locationHistory;
+  } catch (e) {
+    AppConstants.log.e("Error fetching location history: $e");
+    return [];
+  }
+}
+
+/// Buffer location updates and batch upload every 5 minutes
   static void bufferLocationUpdate(LatLng location) {
     final locationData = {
       'latitude': location.latitude,

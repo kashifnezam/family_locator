@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -82,5 +83,23 @@ class CustomWidget {
       return "";
     }
   }
+
+  static CachedNetworkImage getImage(String imageUrl) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      imageBuilder: (context, imageProvider) => Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: imageProvider,
+            fit: BoxFit.cover,
+            // colorFilter:
+            //     ColorFilter.mode(Colors.red, BlendMode.colorBurn),
+          ),
+        ),
+      ),
+      placeholder: (context, url) => buildCircularProgressIndicator(),
+      errorWidget: (context, url, error) => Icon(Icons.error),
+    );
+  }
 }
-//  await FirebaseFileApi.uploadImage(filename, file.path, folder);

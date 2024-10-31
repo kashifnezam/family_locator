@@ -1,6 +1,7 @@
 import 'package:family_locator/controller/home_controller.dart';
 import 'package:family_locator/pages/family_room.dart';
 import 'package:family_locator/pages/settings.dart';
+import 'package:family_locator/pages/support_us.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
@@ -92,7 +93,7 @@ class _HomeState extends State<Home> {
             _buildDrawerItem(
               icon: Icons.account_balance_outlined,
               label: "Donate",
-              // onTap: () => Get.to(() => HistoryTPR()),
+              onTap: () => Get.to(() => SupportUs()),
             ),
             const Divider(color: Colors.white70),
             _buildDrawerItem(
@@ -116,23 +117,22 @@ class _HomeState extends State<Home> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Obx(() => CircleAvatar(
-              backgroundColor: Colors.blueGrey,
-              radius: AppConstants.width * 0.12,
-              backgroundImage: controller.dpImagePath.value.isNotEmpty
-                  ? NetworkImage(controller.dpImagePath.value)
-                  : null,
-              child: controller.dpImagePath.value.isEmpty
-                  ? Text(
-                      controller.username.value.substring(0, 2).toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 22,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : null,
-            )),
+        Obx(
+          () => CircleAvatar(
+            backgroundColor: Colors.blueGrey,
+            radius: AppConstants.width * 0.12,
+            child: controller.dpImagePath.value.isNotEmpty
+                ? CustomWidget.getImage(controller.dpImagePath.value)
+                : Text(
+                    controller.username.value.substring(0, 2).toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
         Obx(() => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -252,18 +252,54 @@ class _HomeState extends State<Home> {
         child: GestureDetector(
           onDoubleTap: () => controller.selectLocation(location),
           onTap: () {
-            Get.to(() => HistoryTPR(
-                  userId: userId,
-                  userDetails: userDetails,
-                ));
-            // Use a safe access to `userDetails` elements to prevent errors
-            // CustomWidget.confirmDialogue(
-            //   title: "User Info",
-            //   content: userDetails.isNotEmpty && userDetails.length > 1
-            //       ? "Name: ${userDetails[1]}\nGroup: ${userDetails.skip(2).join(', ')}"
-            //       : "No user information available.",
-            //   isCancel: false,
-            // );
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  title: Text(
+                    'User Info',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  ),
+                  content: Text(
+                    userDetails.isNotEmpty && userDetails.length > 1
+                        ? "Name: ${userDetails[1]}\nRooms: ${userDetails.skip(2).join(', ')}"
+                        : "No user information available.",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Get.back(); // Close the dialog
+                      },
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Get.to(() => HistoryTPR(
+                              userId: userId,
+                              userDetails: userDetails,
+                            ));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.blueAccent, // Text color
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(10), // Rounded corners
+                        ),
+                      ),
+                      child: Text('View History'),
+                    ),
+                  ],
+                );
+              },
+            );
           },
           child: Tooltip(
             message: userDetails.length > 1 ? userDetails[1] : "Unknown User",
@@ -280,9 +316,7 @@ class _HomeState extends State<Home> {
     return userDetails.isNotEmpty &&
             userDetails[0].isNotEmpty &&
             userId != DeviceInfo.deviceId
-        ? CircleAvatar(
-            backgroundImage: NetworkImage(userDetails[0]),
-          )
+        ? CustomWidget.getImage(userDetails[0])
         : Container(
             decoration: BoxDecoration(
               border: Border.all(color: Colors.blue),

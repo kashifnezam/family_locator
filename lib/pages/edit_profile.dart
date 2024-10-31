@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:family_locator/controller/profile_controller.dart';
 import 'package:family_locator/widgets/button_widget.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
@@ -128,13 +127,6 @@ class _EditProfileState extends State<EditProfile> {
               return CircleAvatar(
                 backgroundColor: Colors.blueGrey,
                 radius: AppConstants.width * 0.3,
-                backgroundImage: _controller.dpImagePath.value.isNotEmpty
-                    ? (_controller.dpImagePath.value.startsWith('http')
-                        ? NetworkImage(
-                            _controller.dpImagePath.value) // If it's a URL
-                        : FileImage(File(_controller
-                            .dpImagePath.value))) // If it's a local file
-                    : null,
                 child: _controller.dpImagePath.value.isEmpty
                     ? CircleAvatar(
                         radius: AppConstants.width * 0.3,
@@ -147,7 +139,7 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                         ),
                       ) // Show initials if no image
-                    : null,
+                    : CustomWidget.getImage(_controller.dpImagePath.value),
               );
             }),
             _buildEditIcon(),

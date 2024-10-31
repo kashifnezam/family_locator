@@ -1,6 +1,7 @@
 import 'package:family_locator/api/firebase_api.dart';
 import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
+import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
@@ -70,12 +71,9 @@ class ChatRoomState extends State<ChatRoom> {
                     () {
                       return CircleAvatar(
                         radius: 19.0, // Inner circle for the image
-                        backgroundImage: controller.roomDP.value != ""
-                            ? NetworkImage(controller.roomDP.value)
-                            : null, // Use network image if available
                         child: controller.roomDP.value == ""
                             ? Text(roomSrtName.toUpperCase())
-                            : null,
+                            : CustomWidget.getImage(controller.roomDP.value),
                       );
                     },
                   ),
