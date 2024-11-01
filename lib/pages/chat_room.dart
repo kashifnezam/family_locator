@@ -3,6 +3,7 @@ import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/utils/device_info.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map_cache/flutter_map_cache.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -178,8 +179,10 @@ class ChatRoomState extends State<ChatRoom> {
                             TileLayer(
                               urlTemplate:
                                   'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              fallbackUrl:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png', // Provide fallback
+                              tileProvider: CachedTileProvider(
+                                // use the store for your CachedTileProvider instance
+                                store: MapConstants.cacheStore,
+                              ),
                             ),
                             PolylineLayer(
                               polylines: [

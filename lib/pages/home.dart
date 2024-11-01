@@ -6,6 +6,7 @@ import 'package:family_locator/utils/constants.dart';
 import 'package:family_locator/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cache/flutter_map_cache.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
 import '../utils/device_info.dart';
@@ -197,7 +198,10 @@ class _HomeState extends State<Home> {
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            tileProvider: CachedTileProvider(
+              // use the store for your CachedTileProvider instance
+              store: MapConstants.cacheStore,
+            ),
           ),
           MarkerClusterLayerWidget(
             options: MarkerClusterLayerOptions(

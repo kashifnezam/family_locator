@@ -1,4 +1,3 @@
-import 'package:family_locator/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart'; // For clipboard functionality
@@ -32,9 +31,8 @@ class SupportUs extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Support Us'),
       ),
-      body: Padding(
-        padding: EdgeInsets.only(
-            top: AppConstants.height * 0.1, left: AppConstants.width * 0.03),
+      body: Center(
+        heightFactor: 1.25,
         child: Card(
           elevation: 4,
           shape: RoundedRectangleBorder(

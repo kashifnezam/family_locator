@@ -1,8 +1,10 @@
 // constants.dart
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logger/logger.dart';
+
 
 class AppConstants {
   static const String appTitle = 'Family Locator';
@@ -31,4 +33,6 @@ class MapConstants {
     const LatLng(6.4626999, 68.1097), // Southwest corner of India
     const LatLng(35.6745457, 97.395561), // Northeast corner of India
   );
+
+  static final cacheStore =  MemCacheStore();
 }

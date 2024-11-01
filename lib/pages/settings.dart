@@ -24,24 +24,7 @@ class SettingsPage extends StatelessWidget {
               style: TextStyle(fontSize: 12),
             ),
             trailing: Obx(() {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildRadioButton(
-                    context,
-                    settingsController,
-                    0,
-                    "Off",
-                  ),
-                  const SizedBox(width: 8),
-                  _buildRadioButton(
-                    context,
-                    settingsController,
-                    1,
-                    "On",
-                  ),
-                ],
-              );
+              return Switch(value: true, onChanged: null);
             }),
           ),
         ],
