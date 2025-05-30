@@ -1,0 +1,2 @@
+D:/MY APP/family_locator/android/app/.cxx/RelWithDebInfo/53i151l4/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/MY APP/family_locator/android/app/.cxx/RelWithDebInfo/53i151l4/arm64-v8a/CMakeFiles/rebuild_cache.dir
