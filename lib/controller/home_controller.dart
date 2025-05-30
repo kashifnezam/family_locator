@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/utils/device_info.dart';
-import 'package:family_locator/utils/location_utils.dart';
+import 'package:family_room/api/firebase_api.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/utils/device_info.dart';
+import 'package:family_room/utils/location_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -16,7 +17,7 @@ class HomeController extends GetxController {
   List<String> roomIds = [];
   final mapController = MapController();
   RxString dpImagePath = "".obs;
-  RxString username = "".obs;
+  RxString username = "Not Available".obs;
 
   @override
   void onInit() {
@@ -97,18 +98,21 @@ class HomeController extends GetxController {
   }
 
   fitMapToBounds() {
-    if (userLocations.isNotEmpty && userLocations.length > 1) {
-      final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
-      mapController.fitCamera(CameraFit.bounds(
-        bounds: bounds,
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 0),
-      ));
+    try {
+      if (userLocations.isNotEmpty && userLocations.length > 1) {
+        final bounds = LatLngBounds.fromPoints(userLocations.values.toList());
+        mapController.fitCamera(CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 0),
+        ));
+      }
+    } catch (e) {
+      AppConstants.log.e(e);
     }
   }
 
   getUserNameDP() async {
-    username.value = (await OfflineData.getData("usr"))!;
-    dpImagePath.value =
-        await FirebaseApi.getDP("anonymous", DeviceInfo.deviceId!);
+    username.value = userInfo?["usr"] ?? "Not Available";
+    dpImagePath.value = userInfo?["dp"] ?? "NA";
   }
 }

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/models/message_model.dart';
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/utils/device_info.dart';
-import 'package:family_locator/utils/location_utils.dart';
+import 'package:family_room/api/firebase_api.dart';
+import 'package:family_room/models/message_model.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/utils/device_info.dart';
+import 'package:family_room/utils/location_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -213,9 +213,6 @@ class ChatRoomController extends GetxController {
             doc.get('usr') ?? 'Unknown'; // Store usernames in the map
       }
 
-      // Log the fetched usernames
-      AppConstants.log.i(userNames);
-
       // Fetch only member details (excluding pending users)
       final membersDocs = await _firestore
           .collection('anonymous')
@@ -251,42 +248,6 @@ class ChatRoomController extends GetxController {
       AppConstants.log.e('Error fetching user names: $e');
     }
   }
-
-  // void fetchLocations() {
-  //   locationsSubscription = _firestore
-  //       .collection('roomDetail')
-  //       .doc(roomId)
-  //       .snapshots()
-  //       .listen((roomSnapshot) {
-  //     if (roomSnapshot.exists) {
-  //       List<String> memberIds =
-  //           List<String>.from(roomSnapshot.get('members') ?? []);
-
-  //       if (memberIds.isNotEmpty) {
-  //         _firestore
-  //             .collection('anonymous')
-  //             .where(FieldPath.documentId, whereIn: memberIds)
-  //             .snapshots()
-  //             .listen((anonymousSnapshot) {
-  //           for (var doc in anonymousSnapshot.docs) {
-  //             final userId = doc.id;
-  //             final currLoc = doc.get('currLoc'); // Get the currLoc string
-  //             final location =
-  //                 _parseLocation(currLoc); // Parse the location string
-  //             if (location != null) {
-  //               userLocations[userId] = location; // Store the LatLng object
-  //             }
-  //           }
-  //         });
-  //       } else {
-  //         userLocations.clear(); // Clear locations if there are no members
-  //       }
-  //     } else {
-  //       AppConstants.log.e('Room not found');
-  //       userLocations.clear(); // Clear locations if room doesn't exist
-  //     }
-  //   });
-  // }
 
   void validateMessage(String text) {
     isMessageValid.value = text.trim().isNotEmpty;

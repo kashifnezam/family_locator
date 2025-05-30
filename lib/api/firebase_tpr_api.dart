@@ -8,33 +8,30 @@ class FirebaseTprApi {
   static final List<Map<String, dynamic>> _locationBuffer = [];
   static bool _hasCleanedUp = false;
 
-  // Method to batch upload location updates as an array in a single document
+  /// Method to batch upload location updates
   static Future<void> uploadBatchLocations() async {
-    AppConstants.log.e("tpr check");
-    AppConstants.log.e(_locationBuffer);
     if (_locationBuffer.isEmpty) return;
 
-    final batch = FirebaseFirestore.instance.batch();
     final userId = DeviceInfo.deviceId;
-    final userDocRef =
-        FirebaseFirestore.instance.collection('History_TPR').doc(userId);
+    if (userId == null) return;
+
+    final userDocRef = _firestore.collection('History_TPR').doc(userId);
+    final batch = _firestore.batch();
 
     try {
       for (var locationData in _locationBuffer) {
-        final timestampedLocation = {
-          "location": locationData,
-          "timestamp":
-              FieldValue.serverTimestamp(), // Add server timestamp as a field
-        };
-
         final locationRef = userDocRef.collection("locations").doc();
-        batch.set(locationRef, timestampedLocation);
+        batch.set(locationRef, {
+          "location": locationData,
+          "timestamp": FieldValue.serverTimestamp(),
+        });
       }
 
       await batch.commit();
       _locationBuffer.clear();
+
       if (!_hasCleanedUp) {
-        _cleanupOldRecords(userId!); // Clean up only on first initialization
+        await _cleanupOldRecords(userId);
         _hasCleanedUp = true;
       }
     } catch (e) {
@@ -42,88 +39,69 @@ class FirebaseTprApi {
     }
   }
 
-// Method to remove location records older than 3 days within a document
+  /// Method to remove records older than 3 days
   static Future<void> _cleanupOldRecords(String userId) async {
     final cutoffDate = DateTime.now().subtract(Duration(days: 3));
 
     try {
-      final docRef = _firestore.collection('History_TPR').doc(userId);
+      final locations = await _firestore
+          .collection('History_TPR')
+          .doc(userId)
+          .collection("locations")
+          .where("timestamp", isLessThan: Timestamp.fromDate(cutoffDate))
+          .get();
 
-      final snapshot = await docRef.get();
-      if (snapshot.exists) {
-        final List<dynamic> locations = snapshot['locations'] ?? [];
-
-        // Filter locations to exclude those older than the cutoff date
-        final updatedLocations = locations
-            .where((location) => (location['timestamp'] as Timestamp)
-                .toDate()
-                .isAfter(cutoffDate))
-            .toList();
-
-        // Update the document with the filtered list
-        await docRef.update({'locations': updatedLocations});
+      final batch = _firestore.batch();
+      for (var doc in locations.docs) {
+        batch.delete(doc.reference);
       }
+      await batch.commit();
     } catch (e) {
       AppConstants.log.e("Error cleaning up old records: $e");
     }
   }
 
-// Method to retrieve location updates for a specific user
+  /// Method to retrieve location history within an optional date range
+  static Future<List<Map<String, dynamic>>> getLocationHistory(
+      String userId, {List<DateTime>? dateRange}) async {
+    try {
+      DateTime startDate, endDate;
+      if (dateRange != null && dateRange.length == 2) {
+        startDate = dateRange[0];
+        endDate = dateRange[1];
+      } else {
+        final now = DateTime.now();
+        startDate = DateTime(now.year, now.month, now.day);
+        endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      }
 
-static Future<List<Map<String, dynamic>>> getLocationHistory(
-    String userId, {List<DateTime>? dateRange}) async {
-  try {
-    // Determine start and end dates based on the dateRange parameter
-    DateTime startDate;
-    DateTime endDate;
+      final snapshot = await _firestore
+          .collection('History_TPR')
+          .doc(userId)
+          .collection('locations')
+          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .orderBy('timestamp', descending: true)
+          .get();
 
-    if (dateRange != null && dateRange.length == 2) {
-      // Use the provided DateTime objects as start and end dates
-      startDate = dateRange[0];
-      endDate = dateRange[1];
-    } else {
-      // Default to today's date range if dateRange is not provided
-      final now = DateTime.now();
-      startDate = DateTime(now.year, now.month, now.day);
-      endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      return snapshot.docs.map((doc) {
+        return {
+          'location': doc['location'],
+          'timestamp': (doc['timestamp'] as Timestamp).toDate(),
+        };
+      }).toList();
+    } catch (e) {
+      AppConstants.log.e("Error fetching location history: $e");
+      return [];
     }
-
-    // Reference to the user's locations subcollection
-    final locationsCollection = FirebaseFirestore.instance
-        .collection('History_TPR')
-        .doc(userId)
-        .collection('locations');
-
-    // Retrieve documents within the specified date range, ordered by timestamp
-    final snapshot = await locationsCollection
-        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-        .orderBy('timestamp', descending: true)
-        .get();
-
-    // Convert each document snapshot into a map with its data
-    final locationHistory = snapshot.docs.map((doc) {
-      return {
-        'location': doc['location'],
-        'timestamp': (doc['timestamp'] as Timestamp).toDate(),
-      };
-    }).toList();
-
-    return locationHistory;
-  } catch (e) {
-    AppConstants.log.e("Error fetching location history: $e");
-    return [];
   }
-}
 
-/// Buffer location updates and batch upload every 5 minutes
+  /// Buffer location updates to batch upload every 5 minutes
   static void bufferLocationUpdate(LatLng location) {
-    final locationData = {
+    _locationBuffer.add({
       'latitude': location.latitude,
       'longitude': location.longitude,
-      'timestamp': FieldValue.serverTimestamp(),
       'deviceId': DeviceInfo.deviceId,
-    };
-    _locationBuffer.add(locationData);
+    });
   }
 }

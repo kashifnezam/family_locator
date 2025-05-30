@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/room_dialogue_controller.dart';
@@ -159,12 +159,13 @@ class RoomDialog extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    controller.submitForm();
+                    controller.submitForm(context);
                   },
                   child: Obx(() => controller.isLoading.value
                       ? CustomWidget.buildCircularProgressIndicator()
-                      : Text(
-                          controller.isCreatingRoom.value ? 'Create' : 'Join')),
+                      : Text(controller.isCreatingRoom.value
+                          ? 'Create'
+                          : 'Request')),
                 ),
               ),
             ],

@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '940248395110',
     projectId: 'family-locator-4f676',
     storageBucket: 'family-locator-4f676.appspot.com',
-    iosBundleId: 'com.example.familyLocator',
+    iosBundleId: 'com.kashif.family_room',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '940248395110',
     projectId: 'family-locator-4f676',
     storageBucket: 'family-locator-4f676.appspot.com',
-    iosBundleId: 'com.example.familyLocator',
+    iosBundleId: 'com.kashif.family_room',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

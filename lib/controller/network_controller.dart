@@ -1,12 +1,9 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:family_locator/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class NetworkController extends GetxController {
   Connectivity connectivity = Connectivity();
-  bool chk = false;
-  RxString connectionStatus = ''.obs;
 
   @override
   void onInit() {
@@ -14,52 +11,55 @@ class NetworkController extends GetxController {
     super.onInit();
   }
 
-  void updateConnectionStatus(List<ConnectivityResult> connectivityResultList) {
-    // if (connectivityResultList.contains(ConnectivityResult.mobile)) {
-    //   chk = true;
-    //   connectionStatus.value = "Connected with Mobile Data";
-    //   AppConstants.log.i(connectionStatus.value);
-    // }
+  void dismissSnackbar() {
+    if (Get.isSnackbarOpen) {
+      Get.back(); // Dismiss the snackbar if it is open
+    }
+  }
 
-    // if (connectivityResultList.contains(ConnectivityResult.wifi)) {
-    //   chk = true;
-    //   connectionStatus.value = "Connected with Wifi";
-    //   AppConstants.log.i(connectionStatus.value);
-    // }
-    // if (connectivityResultList.contains(ConnectivityResult.vpn)) {
-    //   chk = true;
-    //   connectionStatus.value = "Connected with VPN";
-    //   AppConstants.log.i(connectionStatus.value);
-    // }
-    // if (connectivityResultList.contains(ConnectivityResult.ethernet)) {
-    //   chk = true;
-    //   connectionStatus.value = "Connected with Ethernet";
-    //   AppConstants.log.i(connectionStatus.value);
-    // }
-    // if (connectivityResultList.contains(ConnectivityResult.bluetooth)) {
-    //   chk = true;
-    //   connectionStatus.value = "Connected with Bluetooth";
-    //   AppConstants.log.i(connectionStatus.value);
-    // }
-    if (connectivityResultList.contains(ConnectivityResult.none)) {
-      chk = false;
-      connectionStatus.value = "No Internet Available";
-      AppConstants.log.i(connectionStatus.value);
-    }
-    if (connectivityResultList.contains(ConnectivityResult.other)) {
-      chk = false;
-      connectionStatus.value = "Something went wrong";
-      AppConstants.log.i(connectionStatus.value);
-    }
-    if (chk) {
+  showSnackbar() {
+    if (!Get.isSnackbarOpen) {
       Get.snackbar(
-        "Network Status",
-        connectionStatus.value,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.shade100,
+        "Low internet",
+        "Check your internet connection.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.white,
         colorText: Colors.black,
+        icon: const Icon(Icons.wifi_off, color: Colors.red),
+        shouldIconPulse: true,
         isDismissible: false,
+        duration:
+            const Duration(days: 365), // Keeps the snackbar open indefinitely
+        margin: const EdgeInsets.all(16.0),
+        borderRadius: 12.0,
+        animationDuration: const Duration(milliseconds: 500),
+        boxShadows: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8.0,
+            offset: Offset(0, 4),
+          ),
+        ],
+        // mainButton: TextButton(
+        //   onPressed: () {
+        //     // Optionally open network settings or retry logic here
+        //     Get.back(); // Dismiss the snackbar
+        //   },
+        //   child: const Text(
+        //     "Retry",
+        //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        //   ),
+        // ),
       );
+    }
+  }
+
+  void updateConnectionStatus(List<ConnectivityResult> connectivityResultList) {
+    if (connectivityResultList.contains(ConnectivityResult.none)) {
+      showSnackbar();
+    } else if (connectivityResultList.contains(ConnectivityResult.other)) {
+    } else {
+      dismissSnackbar();
     }
   }
 }

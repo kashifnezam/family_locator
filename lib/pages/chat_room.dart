@@ -1,7 +1,7 @@
-import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/utils/device_info.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/api/firebase_api.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/utils/device_info.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map_cache/flutter_map_cache.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -55,49 +55,48 @@ class ChatRoomState extends State<ChatRoom> {
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Hero(
-            tag: "tag${widget.roomId}",
-            child: GestureDetector(
-              onTap: () {
+          title: GestureDetector(
+            onTap: () {
+              if (!controller.isLoading.value) {
                 Get.to(() => MembersPage(
                       initialMembers: controller.membersMap,
                       user: widget.userId,
                       isAdmin: false,
                     ));
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Obx(
-                    () {
-                      return CircleAvatar(
-                        radius: 19.0, // Inner circle for the image
-                        child: controller.roomDP.value == ""
-                            ? Text(roomSrtName.toUpperCase())
-                            : CustomWidget.getImage(controller.roomDP.value),
-                      );
-                    },
-                  ),
-                  const SizedBox(
-                    width: 6,
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.roomName,
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        widget.roomId,
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Obx(
+                  () {
+                    return CircleAvatar(
+                      radius: 19.0, // Inner circle for the image
+                      child: controller.roomDP.value == ""
+                          ? Text(roomSrtName.toUpperCase())
+                          : CustomWidget.getImage(controller.roomDP.value),
+                    );
+                  },
+                ),
+                const SizedBox(
+                  width: 6,
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.roomName,
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      widget.roomId,
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
           actions: [
@@ -355,23 +354,15 @@ class ChatRoomState extends State<ChatRoom> {
 
                                         // Check if the message is a system message
                                         if (message.sender == "System") {
-                                          return Hero(
-                                            tag:
-                                                uniqueTag, // Use the unique tag here
-                                            child: _buildSystemMessageBubble(
-                                                context, message.text),
-                                          );
+                                          return _buildSystemMessageBubble(
+                                              context, message.text);
                                         } else {
-                                          return Hero(
-                                            tag:
-                                                uniqueTag, // Use the unique tag here
-                                            child: _buildMessageBubble(
-                                              context,
-                                              isMe,
-                                              senderName,
-                                              message.text,
-                                              formattedTime,
-                                            ),
+                                          return _buildMessageBubble(
+                                            context,
+                                            isMe,
+                                            senderName,
+                                            message.text,
+                                            formattedTime,
                                           );
                                         }
                                       },
@@ -426,6 +417,7 @@ class ChatRoomState extends State<ChatRoom> {
               top: 16,
               right: 16,
               child: FloatingActionButton(
+                heroTag: null,
                 onPressed: controller.toggleMapExpansion,
                 child: Obx(() => Icon(
                     controller.isMapExpanded.value ? Icons.close : Icons.map)),
@@ -437,6 +429,7 @@ class ChatRoomState extends State<ChatRoom> {
                   top: 16,
                   left: 16,
                   child: FloatingActionButton(
+                    heroTag: null,
                     onPressed: () {
                       if (!controller.isLargerMap.value) {
                         FocusScope.of(context).unfocus();
@@ -460,6 +453,7 @@ class ChatRoomState extends State<ChatRoom> {
                     ? const SizedBox
                         .shrink() // Hide the button if at the bottom
                     : FloatingActionButton(
+                        heroTag: null,
                         onPressed: controller.scrollToBottom,
                         child: const Icon(Icons.arrow_downward),
                       );
@@ -505,93 +499,90 @@ class ChatRoomState extends State<ChatRoom> {
                                 .notifCount.length, // Number of notifications
                             itemBuilder: (context, index) {
                               var id = controller.notifCount[index];
-                              return Hero(
-                                tag: 'tagId$index',
-                                child: Container(
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 6),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12, horizontal: 16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amberAccent.shade100,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Obx(
-                                      () {
-                                        return Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                controller.userNames[id] ??
-                                                    id, // Notification content
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
+                              return Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12, horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amberAccent.shade100,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Obx(
+                                    () {
+                                      return Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              controller.userNames[id] ??
+                                                  id, // Notification content
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                             ),
-                                            Row(
-                                              children: [
-                                                IconButton(
-                                                  onPressed: () {
-                                                    FirebaseApi
-                                                        .modifyDeviceInCollection(
-                                                            "roomDetail",
-                                                            widget.roomId,
-                                                            id,
-                                                            "members",
-                                                            true);
-                                                    FirebaseApi
-                                                        .modifyDeviceInCollection(
-                                                            "roomDetail",
-                                                            widget.roomId,
-                                                            id,
-                                                            "pending",
-                                                            false);
-                                                    FirebaseApi
-                                                        .modifyDeviceInCollection(
-                                                            "anonymous",
-                                                            id,
-                                                            widget.roomId,
-                                                            "roomId",
-                                                            true);
-                                                    FirebaseApi.userJoinLeft(
-                                                        "joined",
-                                                        widget.roomId,
-                                                        controller.userNames[
-                                                                id] ??
-                                                            id);
-                                                  },
-                                                  icon: const Icon(
-                                                    Icons.check,
-                                                    color: Colors.greenAccent,
-                                                  ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                onPressed: () {
+                                                  FirebaseApi
+                                                      .modifyDeviceInCollection(
+                                                          "roomDetail",
+                                                          widget.roomId,
+                                                          id,
+                                                          "members",
+                                                          true);
+                                                  FirebaseApi
+                                                      .modifyDeviceInCollection(
+                                                          "roomDetail",
+                                                          widget.roomId,
+                                                          id,
+                                                          "pending",
+                                                          false);
+                                                  FirebaseApi
+                                                      .modifyDeviceInCollection(
+                                                          "anonymous",
+                                                          id,
+                                                          widget.roomId,
+                                                          "roomId",
+                                                          true);
+                                                  FirebaseApi.userJoinLeft(
+                                                      "joined",
+                                                      widget.roomId,
+                                                      controller
+                                                              .userNames[id] ??
+                                                          id);
+                                                },
+                                                icon: const Icon(
+                                                  Icons.check,
+                                                  color: Colors.greenAccent,
                                                 ),
-                                                const SizedBox(width: 8),
-                                                IconButton(
-                                                  onPressed: () {
-                                                    FirebaseApi
-                                                        .modifyDeviceInCollection(
-                                                            "roomDetail",
-                                                            widget.roomId,
-                                                            id,
-                                                            "pending",
-                                                            false);
-                                                  },
-                                                  icon: const Icon(
-                                                    Icons.close,
-                                                    color: Colors.redAccent,
-                                                  ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              IconButton(
+                                                onPressed: () {
+                                                  FirebaseApi
+                                                      .modifyDeviceInCollection(
+                                                          "roomDetail",
+                                                          widget.roomId,
+                                                          id,
+                                                          "pending",
+                                                          false);
+                                                },
+                                                icon: const Icon(
+                                                  Icons.close,
+                                                  color: Colors.redAccent,
                                                 ),
-                                              ],
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    )),
-                              );
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ));
                             },
                           ),
                         ),
@@ -671,7 +662,7 @@ class ChatRoomState extends State<ChatRoom> {
                   fontSize: 12,
                 ),
               ),
-            Text(text),
+            SelectableText(text),
             Align(
               alignment: Alignment.bottomRight,
               child: Text(

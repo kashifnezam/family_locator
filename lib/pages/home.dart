@@ -1,14 +1,14 @@
-import 'package:family_locator/controller/home_controller.dart';
-import 'package:family_locator/pages/family_room.dart';
-import 'package:family_locator/pages/settings.dart';
-import 'package:family_locator/pages/support_us.dart';
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/controller/home_controller.dart';
+import 'package:family_room/pages/family_room.dart';
+import 'package:family_room/pages/support_us.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cache/flutter_map_cache.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
+import 'package:upgrader/upgrader.dart';
 import '../utils/device_info.dart';
 import '../widgets/button_widget.dart';
 import 'edit_profile.dart';
@@ -23,13 +23,21 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final HomeController controller = Get.put(HomeController());
+  final GlobalKey _toolTipKey = GlobalKey();
+
+  void _showTooltip() {
+    final dynamic tooltip = _toolTipKey.currentState;
+    tooltip?.ensureTooltipVisible();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      drawer: _buildDrawer(),
-      body: _buildMap(),
+    return UpgradeAlert(
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        drawer: _buildDrawer(),
+        body: _buildMap(),
+      ),
     );
   }
 
@@ -47,6 +55,7 @@ class _HomeState extends State<Home> {
       ),
       centerTitle: true,
       actions: [
+        getToolTip(),
         IconButton(
           onPressed: controller.fitMapToBounds,
           icon: const Icon(Icons.reset_tv_rounded),
@@ -75,7 +84,7 @@ class _HomeState extends State<Home> {
             ),
             _buildDrawerItem(
               icon: Icons.groups_3_sharp,
-              label: "Groups",
+              label: "Rooms",
               onTap: () {
                 Get.back();
                 CustomWidget.roomWidget();
@@ -83,28 +92,30 @@ class _HomeState extends State<Home> {
             ),
             _buildDrawerItem(
               icon: Icons.cast_connected,
-              color: Colors.white70,
+              color: Colors.white60,
               label: "Connections",
             ),
             _buildDrawerItem(
               icon: Icons.settings,
+              color: Colors.white60,
               label: "Settings",
-              onTap: () => Get.to(() => const SettingsPage()),
+              // onTap: () => Get.to(() => const SettingsPage()),
             ),
             _buildDrawerItem(
               icon: Icons.account_balance_outlined,
               label: "Donate",
               onTap: () => Get.to(() => SupportUs()),
             ),
-            const Divider(color: Colors.white70),
+            const Divider(color: Colors.white60),
             _buildDrawerItem(
               icon: Icons.group_add,
+              color: Colors.white60,
               label: "Invite Friends",
             ),
             _buildDrawerItem(
-              icon: Icons.logout_rounded,
-              color: Colors.white70,
-              label: "Logout",
+              icon: Icons.login_outlined,
+              color: Colors.white60,
+              label: "Login",
             ),
           ],
         ),
@@ -124,12 +135,14 @@ class _HomeState extends State<Home> {
             radius: AppConstants.width * 0.12,
             child: controller.dpImagePath.value.isNotEmpty
                 ? CustomWidget.getImage(controller.dpImagePath.value)
-                : Text(
-                    controller.username.value.substring(0, 2).toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 22,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                : Flexible(
+                    child: Text(
+                      controller.username.value.substring(0, 2).toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
           ),
@@ -140,7 +153,7 @@ class _HomeState extends State<Home> {
                 Text(
                   controller.username.value,
                   style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Colors.white),
                 ),
@@ -233,6 +246,40 @@ class _HomeState extends State<Home> {
     );
   }
 
+  Widget getToolTip() {
+    return GestureDetector(
+      onTap: _showTooltip,
+      child: Tooltip(
+        key: _toolTipKey,
+        message:
+            "To ensure the latest information is displayed, please restart the app whenever you join a room or a new member is added.",
+        padding: EdgeInsets.all(12.0),
+        margin: EdgeInsets.symmetric(horizontal: 16.0),
+        showDuration: Duration(seconds: 5),
+        decoration: BoxDecoration(
+          color: Colors.blueGrey.shade800,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        textStyle: TextStyle(
+          fontSize: 14,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+        child: IconButton(
+          icon: Icon(Icons.info_outline, color: Colors.white),
+          onPressed: _showTooltip,
+        ),
+      ),
+    );
+  }
+
   // Generate user markers for the map
   List<Marker> _buildUserMarkers() {
     return controller.userLocations.entries.map((entry) {
@@ -267,11 +314,38 @@ class _HomeState extends State<Home> {
                     'User Info',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
-                  content: Text(
-                    userDetails.isNotEmpty && userDetails.length > 1
-                        ? "Name: ${userDetails[1]}\nRooms: ${userDetails.skip(2).join(', ')}"
-                        : "No user information available.",
-                    style: TextStyle(fontSize: 16),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Profile picture on top
+                      CircleAvatar(
+                        backgroundColor: Colors.blueGrey,
+                        radius: AppConstants.width * 0.12,
+                        child: userDetails[0].isNotEmpty
+                            ? CustomWidget.getImage(userDetails[0])
+                            : Text(
+                                controller.username.value
+                                    .substring(0, 2)
+                                    .toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                      SizedBox(
+                          height: 16), // Space between profile picture and text
+                      // User information text
+                      Text(
+                        userDetails.isNotEmpty && userDetails.length > 1
+                            ? "Name: ${userDetails[1]}\nRooms: ${userDetails.skip(2).join(', ')}"
+                            : "No user information available.",
+                        style: TextStyle(fontSize: 16),
+                        textAlign: TextAlign
+                            .center, // Center the text for better alignment
+                      ),
+                    ],
                   ),
                   actions: <Widget>[
                     TextButton(
@@ -320,10 +394,16 @@ class _HomeState extends State<Home> {
     return userDetails.isNotEmpty &&
             userDetails[0].isNotEmpty &&
             userId != DeviceInfo.deviceId
-        ? CustomWidget.getImage(userDetails[0])
+        ? Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.red),
+              shape: BoxShape.circle,
+            ),
+            child: CustomWidget.getImage(userDetails[0]),
+          )
         : Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue),
+              border: Border.all(color: Colors.black),
               color: userId == DeviceInfo.deviceId
                   ? Colors.blueGrey
                   : Colors.white,

@@ -1,5 +1,5 @@
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cache/flutter_map_cache.dart';

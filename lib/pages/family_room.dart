@@ -1,7 +1,8 @@
-import 'package:family_locator/controller/family_room_controller.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/controller/family_room_controller.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 import '../utils/constants.dart';
 import '../utils/device_info.dart';
 import '../widgets/button_widget.dart';
@@ -21,7 +22,7 @@ class FamilyRoom extends StatelessWidget {
         title: GestureDetector(
           onTap: () => CustomWidget.roomWidget(),
           child: ButtonWidget.elevatedBtn(
-            "Create/Join Group",
+            "Create/Join Rooms",
             height: AppConstants.height * 0.05,
           ),
         ),
@@ -38,23 +39,41 @@ class FamilyRoom extends StatelessWidget {
           // Destructure the controller's room list for better readability
           final roomList = controller.roomList;
 
-          return ListView.builder(
-            itemCount: roomList.length,
-            itemBuilder: (context, index) {
-              final room = roomList[index];
-              final String roomName = room["name"];
-              final String roomSrtName =
-                  roomName.length >= 2 ? roomName.substring(0, 2) : roomName;
+          return !controller.isLoading.value
+              ? roomList.isNotEmpty
+                  ? ListView.builder(
+                      itemCount: roomList.length,
+                      itemBuilder: (context, index) {
+                        final room = roomList[index];
+                        final String roomName = room["name"];
+                        final String roomSrtName = roomName.length >= 2
+                            ? roomName.substring(0, 2)
+                            : roomName;
 
-              return ListTile(
-                onTap: () => _navigateToChatRoom(room),
-                leading: _buildRoomAvatar(room, roomSrtName),
-                title: _buildRoomTitle(room),
-                subtitle: _buildRoomSubtitle(),
-                trailing: const Text("12:33"), // Placeholder for message time
-              );
-            },
-          );
+                        return ListTile(
+                          onTap: () => _navigateToChatRoom(room),
+                          leading: _buildRoomAvatar(room, roomSrtName),
+                          title: _buildRoomTitle(room),
+                          subtitle: _buildRoomSubtitle(room["msg"]),
+                          trailing: const Text(
+                              "12:33"), // Placeholder for message time
+                        );
+                      },
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("No Rooms avialable"),
+                          Text(
+                            "Please either Join or Create Rooms",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    )
+              : ShimmerList();
         },
       ),
     );
@@ -95,8 +114,34 @@ class FamilyRoom extends StatelessWidget {
   }
 
   // Method to build the Room Subtitle
-  Widget _buildRoomSubtitle() {
-    return const Text("My last message",
-        style: TextStyle(fontSize: 12, color: Colors.grey));
+  Widget _buildRoomSubtitle(String msg) {
+    return Text(msg, style: TextStyle(fontSize: 12, color: Colors.grey));
+  }
+}
+
+class ShimmerList extends StatelessWidget {
+  const ShimmerList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+        itemCount: 10, // Adjust the count based on your needs
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: CircleAvatar(
+              radius: AppConstants.width * 0.05,
+            ),
+            title: Container(
+              height: 30,
+              width: 200,
+              color: Colors.white,
+            ),
+          );
+        },
+      ),
+    );
   }
 }

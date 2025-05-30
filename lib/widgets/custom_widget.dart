@@ -45,15 +45,16 @@ class CustomWidget {
   }
 
   static Future<void> roomWidget() async {
-    String? usr = await OfflineData.getData("usr");
+    String? usr = userInfo?["usr"];
     if (usr != null) {
-      String? dateString = await OfflineData.getData("date");
-      if (dateString != null) {
-        DateTime date = DateTime.parse(dateString);
-        if (DateTime.now().isAfter(date.add(const Duration(days: 7)))) {
-          usr = null;
-        }
-      }
+      // String? dateString = null;
+      // // String? dateString = await OfflineData.getData("date");
+      // if (dateString != null) {
+      //   DateTime date = DateTime.parse(dateString);
+      //   if (DateTime.now().isAfter(date.add(const Duration(days: 7)))) {
+      //     usr = null;
+      //   }
+      // }
     }
     usr != null ? Get.dialog(RoomDialog()) : Get.dialog(UsernameDialog());
   }

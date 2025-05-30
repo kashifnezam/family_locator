@@ -7,12 +7,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:940248395110:android:ca3c10859a0f0aaacaeca7",
+        "mobilesdk_app_id": "1:940248395110:android:a52007fa3eb7e5dacaeca7",
         "android_client_info": {
-          "package_name": "com.example.family"
+          "package_name": "com.example.family_locator"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "940248395110-bo1uce3sldhdf0a514sl97o2u8bp6f8c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.family_locator",
+            "certificate_hash": "e8beed902452b387a60a539605c7e4db2aba4a01"
+          }
+        },
         {
           "client_id": "940248395110-ih8ca31n3docbbqu8iek19r3242dtg30.apps.googleusercontent.com",
           "client_type": 3
@@ -43,18 +51,18 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:940248395110:android:a52007fa3eb7e5dacaeca7",
+        "mobilesdk_app_id": "1:940248395110:android:369a3424a9362180caeca7",
         "android_client_info": {
-          "package_name": "com.example.family_locator"
+          "package_name": "com.kashif.family_room"
         }
       },
       "oauth_client": [
         {
-          "client_id": "940248395110-bo1uce3sldhdf0a514sl97o2u8bp6f8c.apps.googleusercontent.com",
+          "client_id": "940248395110-fr51v2on0mgrovq4ghculp401fj745n5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.family_locator",
-            "certificate_hash": "e8beed902452b387a60a539605c7e4db2aba4a01"
+            "package_name": "com.kashif.family_room",
+            "certificate_hash": "3601e906b333681b13328a20d41923e7401fe641"
           }
         },
         {

@@ -1,5 +1,6 @@
-import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/utils/device_info.dart';
+import 'package:family_room/api/firebase_api.dart';
+import 'package:family_room/utils/custom_alert.dart';
+import 'package:family_room/utils/device_info.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../api/firebase_file_api.dart';
@@ -19,7 +20,7 @@ class RoomDialogController extends GetxController {
     roomController.clear();
   }
 
-  Future<void> submitForm() async {
+  Future<void> submitForm(BuildContext context) async {
     if ((nameController.text.isEmpty ||
             nameController.text.length < 3 ||
             nameController.text.length > 15) &&
@@ -70,7 +71,7 @@ class RoomDialogController extends GetxController {
           Get.snackbar(
             backgroundColor: Colors.green,
             'Created Room',
-            'Name: ${await OfflineData.getData("usr")}, Room: ${roomController.text}',
+            'Name: ${userInfo?["usr"]}, Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
 
@@ -89,6 +90,12 @@ class RoomDialogController extends GetxController {
             'Try changing Room no. or Join with Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
+        } else if (response == -4) {
+          if (context.mounted) {
+            Get.back();
+            CustomAlert.errorAlert(context,
+                "You can't connect more than 10 Rooms\nExit the older room to join");
+          }
         } else {
           Get.snackbar(
             backgroundColor: Colors.red,
@@ -109,7 +116,7 @@ class RoomDialogController extends GetxController {
           Get.snackbar(
             backgroundColor: Colors.green,
             'Joined Room',
-            'Name: ${await OfflineData.getData("usr")}, Room: ${roomController.text}',
+            'Name: ${userInfo?["usr"]}, Room: ${roomController.text}',
             snackPosition: SnackPosition.TOP,
           );
 
@@ -138,10 +145,16 @@ class RoomDialogController extends GetxController {
         } else if (response == -3) {
           Get.snackbar(
             backgroundColor: const Color.fromARGB(255, 60, 238, 197),
-            "ALready Requested",
-            "Please ask admin to accept your request",
+            "Already Requested",
+            "Please ask owner/admin to accept your request",
             snackPosition: SnackPosition.TOP,
           );
+        } else if (response == -4) {
+          if (context.mounted) {
+            Get.back();
+            CustomAlert.errorAlert(context,
+                "You can't join more than 10 Rooms;\nThis limit might increase in the future.");
+          }
         } else {
           Get.snackbar(
             backgroundColor: Colors.red,

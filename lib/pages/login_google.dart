@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'package:family_locator/api/save_data.dart';
-import 'package:family_locator/pages/room_dialogue.dart';
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/utils/device_info.dart';
-import 'package:family_locator/utils/offline_data.dart';
-import 'package:family_locator/widgets/button_widget.dart';
-import 'package:family_locator/widgets/username_dialogue.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/api/save_data.dart';
+import 'package:family_room/pages/room_dialogue.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/utils/device_info.dart';
+import 'package:family_room/utils/offline_data.dart';
+import 'package:family_room/widgets/button_widget.dart';
+import 'package:family_room/widgets/username_dialogue.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -247,16 +247,16 @@ class SearchPageState extends State<SearchPage> {
                   left: AppConstants.width * 0.25),
               child: GestureDetector(
                 onTap: () async {
-                  String? usr = await OfflineData.getData("usr");
+                  String? usr = userInfo?["usr"];
                   if (usr != null) {
-                    String? dateString = await OfflineData.getData("date");
-                    if (dateString != null) {
-                      DateTime date = DateTime.parse(dateString);
-                      if (DateTime.now()
-                          .isAfter(date.add(const Duration(days: 7)))) {
-                        usr = null;
-                      }
-                    }
+                    // String? dateString = null;
+                    // if (dateString != null) {
+                    //   DateTime date = DateTime.parse(dateString);
+                    //   if (DateTime.now()
+                    //       .isAfter(date.add(const Duration(days: 7)))) {
+                    //     usr = null;
+                    //   }
+                    // }
                   }
                   usr != null
                       ? Get.dialog(RoomDialog())

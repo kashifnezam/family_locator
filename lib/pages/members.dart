@@ -1,5 +1,7 @@
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/widgets/button_widget.dart';
+import 'dart:io';
+
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/widgets/button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -27,7 +29,7 @@ class MembersPage extends StatelessWidget {
     isOwner = controller.user.value == controller.membersMap[0]['ownerId'];
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Group Members'),
+        title: const Text('Room Members'),
         actions: [
           Obx(
             () => Row(
@@ -87,7 +89,7 @@ class MembersPage extends StatelessWidget {
                 title: Text(controller.groupName.value),
                 subtitle: const Text(
                   "Room Name",
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 trailing: GestureDetector(
                     onTap: () {
@@ -120,15 +122,18 @@ class MembersPage extends StatelessWidget {
                 onTap: () async {
                   await controller.exitGroup(context).then(
                     (value) {
-                      if (context.mounted) {
+                      if (value == 0 && context.mounted) {
                         CustomAlert.successAlert(context,
                             "You have exited from Room: ${controller.membersMap[0]['GroupName']}");
                       }
                     },
                   );
                 },
-                child: ButtonWidget.elevatedBtn("Exit Group",
-                    borderColor: Colors.red),
+                child: ButtonWidget.elevatedBtn(
+                  "Exit Room",
+                  borderColor: Colors.red,
+                  height: AppConstants.height * 0.06,
+                ),
               ),
             ),
           ],
@@ -152,18 +157,27 @@ class MembersPage extends StatelessWidget {
                 child: controller.dpImagePath.value.isEmpty
                     ? CircleAvatar(
                         radius: AppConstants.width * 0.3,
-                        child: Text(
-                          controller.groupName.value
-                              .substring(0, 2)
-                              .toUpperCase(),
+                        child: const Text(
+                          "MK",
                           style: TextStyle(
                             fontSize: 40,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ) // Show initials if no image
-                    : CustomWidget.getImage(controller.dpImagePath.value),
+                      )
+                    : controller.dpImagePath.value.startsWith('http')
+                        ? CircleAvatar(
+                            radius: AppConstants.width * 0.3,
+                            child: CustomWidget.getImage(
+                                controller.dpImagePath.value),
+                          )
+                        : CircleAvatar(
+                            radius: AppConstants.width * 0.3,
+                            backgroundImage: FileImage(
+                              File(controller.dpImagePath.value),
+                            ),
+                          ),
               );
             }),
             _buildEditIcon(),
@@ -175,8 +189,8 @@ class MembersPage extends StatelessWidget {
 
   Widget _buildEditIcon() {
     return Positioned(
-      bottom: 10,
-      right: 10,
+      bottom: 20,
+      right: 15,
       child: GestureDetector(
         onTap: () async {
           // Opens image picker and updates the profile image
@@ -201,7 +215,6 @@ class MembersPage extends StatelessWidget {
       ),
     );
   }
-
 
   Widget _buildMemberList() {
     return ListView.builder(
@@ -271,8 +284,15 @@ class MembersPage extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.delete),
                 title: const Text('Remove Member'),
-                onTap: () {
-                  controller.removeMember(memberIndex);
+                onTap: () async {
+                  String name = controller.membersMap[memberIndex]["name"];
+                  final isConfirm = await CustomAlert.confirmAlert(
+                    context,
+                    "Are you sure want to remove \"$name\"?",
+                  );
+                  if (isConfirm) {
+                     controller.removeMember(memberIndex);
+                  }
                   Get.back(); // Close the modal
                 },
               ),

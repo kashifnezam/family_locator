@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:family_locator/api/firebase_tpr_api.dart';
-import 'package:family_locator/utils/constants.dart';
+import 'package:family_room/api/firebase_tpr_api.dart';
+import 'package:family_room/utils/constants.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
@@ -20,18 +20,19 @@ class LocationUtils {
     _batchUploadTimer?.cancel();
   }
 
-  static void initializeBatchUpload() {
+  /// Initializes batch location upload for periodic background updates.
+  static Future<void> initializeBatchUpload() async {
     _batchUploadTimer = Timer.periodic(
       Duration(seconds: BATCH_UPLOAD_INTERVAL),
       (Timer timer) => FirebaseTprApi.uploadBatchLocations(),
     );
   }
 
-
-  static void getCurrentLocation({
+  /// Fetches live location updates when the app is in the foreground.
+  static Future<void> getCurrentLocation({
     required Function(LatLng) onLocationLoaded,
     Function(String)? onError,
-    Function() ?onStartMoving,
+    Function()? onStartMoving,
   }) async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -41,8 +42,7 @@ class LocationUtils {
     if (!serviceEnabled) {
       Get.defaultDialog(
         title: 'Location Services Disabled',
-        middleText:
-            'Location services are disabled. Would you like to enable them?',
+        middleText: 'Location services are disabled. Would you like to enable them?',
         textConfirm: 'Yes',
         onConfirm: () async {
           await Geolocator.openLocationSettings();
@@ -50,7 +50,7 @@ class LocationUtils {
         },
         textCancel: 'No',
         onCancel: () {
-          onError!("Location services are disabled.");
+          onError?.call("Location services are disabled.");
         },
       );
     }
@@ -60,12 +60,12 @@ class LocationUtils {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        onError!("Location permissions are denied.");
+        onError?.call("Location permissions are denied.");
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      onError!("Location permissions are permanently denied.");
+      onError?.call("Location permissions are permanently denied.");
       return;
     }
 
@@ -82,43 +82,67 @@ class LocationUtils {
                 _previousLocation!.longitude,
                 currentLocation.latitude,
                 currentLocation.longitude,
-              ) >=
-              distanceThreshold) {
+              ) >= distanceThreshold) {
         onStartMoving?.call();
-       FirebaseTprApi.bufferLocationUpdate(currentLocation);
+        FirebaseTprApi.bufferLocationUpdate(currentLocation);
       }
 
       _previousLocation = currentLocation;
       onLocationLoaded(currentLocation);
     }, onError: (e) {
-      onError!("Error getting live location: $e");
+      onError?.call("Error getting live location: $e");
     });
   }
 
+  /// One-time location fetch, suitable for background headless tasks.
+  static Future<LatLng?> getCurrentLocationOnce() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        AppConstants.log.e("Location services are disabled.");
+        return null;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        AppConstants.log.e("Location permissions are denied.");
+        return null;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+      return LatLng(position.latitude, position.longitude);
+    } catch (e) {
+      AppConstants.log.e("Error fetching one-time location: $e");
+      return null;
+    }
+  }
+
+  /// Helper to fetch local IP address.
   static Future<String?> getLocalIPAddress() async {
     try {
       final info = NetworkInfo();
       // Get the local IP address
       String? ipAddress = await info.getWifiIP();
-      return ipAddress; // Return the local IP address
+      return ipAddress;
     } catch (e) {
       AppConstants.log.e('Error fetching local IP address: $e');
       return null;
     }
   }
 
+  /// Helper to fetch MAC address.
   static Future<String?> getMacAddress() async {
     try {
       final info = NetworkInfo();
-      // Get the MAC address of the Wi-Fi
       String? macAddress = await info.getWifiBSSID();
-      return macAddress; // Return the MAC address
+      return macAddress;
     } catch (e) {
       AppConstants.log.e('Error fetching MAC address: $e');
       return null;
     }
   }
 
+  /// Fetches device-specific unique identifier.
   static Future<String?> getDeviceId() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     String? deviceId;
@@ -139,6 +163,7 @@ class LocationUtils {
     return deviceId;
   }
 
+  /// Parses LatLng from a formatted string.
   static LatLng? parseLocation(String currLoc) {
     // Example: "LatLng(latitude:28.617113, longitude:77.373625)"
     final regex =
@@ -149,6 +174,6 @@ class LocationUtils {
       final longitude = double.parse(match.group(2)!);
       return LatLng(latitude, longitude);
     }
-    return null; // Return null if parsing fails
+    return null;
   }
 }

@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:family_locator/models/anonymous_model.dart';
-import 'package:family_locator/models/user_model.dart';
-import 'package:family_locator/utils/device_info.dart';
-import 'package:family_locator/utils/location_utils.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/models/anonymous_model.dart';
+import 'package:family_room/models/user_model.dart';
+import 'package:family_room/utils/device_info.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/message_model.dart';
@@ -11,7 +10,7 @@ import '../utils/constants.dart';
 import '../utils/offline_data.dart';
 
 class FirebaseApi {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final FirebaseFirestore _firestore = FirebaseFirestore. instance;
   // Fetch data from Firestore
   static Future<List<UserModel>> fetchData(String col) async {
     List<UserModel> groupMembers = [];
@@ -148,6 +147,10 @@ class FirebaseApi {
       AppConstants.log.e("Room with this id already Exists");
       return 0;
     }
+    if ((await getAllJoinedRooms(deviceId)).length >= 10) {
+      AppConstants.log.e("User Exceed the joined room which is 10");
+      return -4;
+    }
     try {
       await _firestore.collection('anonymous').doc(deviceId).set({
         'roomId': FieldValue.arrayUnion([roomId]),
@@ -171,9 +174,22 @@ class FirebaseApi {
       AppConstants.log.e("Room with this id does not Exist");
       return 0;
     }
+    if ((await getAllJoinedRooms(deviceId)).length >= 10) {
+      AppConstants.log.e("User Exceed the joined room which is 10");
+      return -4;
+    }
+
     List<String> members =
         await getRoomMembers(roomId, "roomDetail", "members");
     if (!members.contains(deviceId)) {
+      bool isOwner = await getOwner(roomId) == deviceId;
+      if (isOwner) {
+        modifyDeviceInCollection(
+            "roomDetail", roomId, deviceId, "members", true);
+        modifyDeviceInCollection("anonymous", deviceId, roomId, "roomId", true);
+        userJoinLeft("joined", roomId, "himself again (owner)");
+        return 1;
+      }
       List<String> pending =
           await getRoomMembers(roomId, "roomDetail", "pending");
       if (!pending.contains(deviceId)) {
@@ -182,31 +198,53 @@ class FirebaseApi {
       } else {
         return -3;
       }
+
       return -2;
     }
     return 1;
   }
 
-  static Future<void> userJoinLeft(String status, String roomId, String userId) async {
+  static Future<void> userJoinLeft(
+      String status, String roomId, String userId) async {
+    // Determine the message based on the status using a switch
+    String messageText;
+    switch (status) {
+      case "joined":
+        messageText = '${userInfo?["usr"]} added => $userId';
+        break;
+      case "left":
+        messageText = "$userId left the room";
+        break;
+      case "remove":
+        messageText = "Owner removed $userId";
+        break;
+      default:
+        AppConstants.log.e("Unknown status: $status");
+        return; // Exit if the status is unknown
+    }
+
+    // Create message model
     final message = MessageModel(
-      sender: 'System', // System message to indicate a user joined
-      text: status == "joined" ?
-      '${await OfflineData.getData("usr")} added => $userId'
-          : "$userId left the room",
+      sender: 'System',
+      text: messageText,
       timestamp: Timestamp.now(),
     );
 
-    // Send the message to Firestore
+    // Send message to Firestore
     await _firestore
         .collection('chatrooms')
         .doc(roomId)
         .collection('messages')
         .add(message.toMap());
-    LocationUtils.getCurrentLocation(
-      onLocationLoaded: (location) async {
-        await updateLocation(location.toString(), DeviceInfo.deviceId!);
-      },
-    );
+
+    // // Update location if status is "joined" or "left"
+    // if (status == "joined") {
+    //   LocationUtils.getCurrentLocation(
+    //     onLocationLoaded: (location) async {
+    //       await updateLocation(location.toString(), DeviceInfo.deviceId!);
+    //     },
+    //   );
+    // }
   }
 
   /// Checks if the given username is already used in the 'anonymous' collection.
@@ -348,7 +386,7 @@ class FirebaseApi {
     }
   }
 
-  static Future<int> exitGroup(String roomNo, String userId) async {
+  static Future<int> removeMember(String roomNo, String userId) async {
     try {
       // Run the update operations in a Firestore transaction to ensure atomicity
       await _firestore.runTransaction((transaction) async {
@@ -426,5 +464,16 @@ class FirebaseApi {
       AppConstants.log.e("Error fetching last message for room $roomId: $e");
       return null;
     }
+  }
+
+  static Future<List<String>> getAllJoinedRooms(String userId) async {
+    return await getRoomMembers(userId, "anonymous", "roomId");
+  }
+
+  //Version Updates
+  static Future<Map<String, dynamic>?> getVersionUpdate() async {
+    final DocumentSnapshot snapshot =
+        await _firestore.collection("verification").doc("1.0.0").get();
+    return snapshot.data() as Map<String, dynamic>?;
   }
 }

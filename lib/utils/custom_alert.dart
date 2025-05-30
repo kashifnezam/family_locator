@@ -11,12 +11,10 @@ class CustomAlert {
     );
   }
 
-  static void errorAlert(BuildContext context, String text) {
+  static void errorAlert(BuildContext context, String text,
+      {String title = "Error"}) {
     QuickAlert.show(
-      context: context,
-      type: QuickAlertType.error,
-      text: text,
-    );
+        context: context, type: QuickAlertType.error, text: text, title: title);
   }
 
   static void loadAlert(BuildContext context, String text) {

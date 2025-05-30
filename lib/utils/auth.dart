@@ -1,9 +1,6 @@
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
-import '../pages/search_page.dart';
 
 Future<UserCredential> signInWithGoogle() async {
   // Trigger the authentication flow
@@ -26,6 +23,6 @@ Future<UserCredential> signInWithGoogle() async {
 googleLogin() {
   CustomWidget.buildCircularProgressIndicator();
   signInWithGoogle().then((user) {
-    Get.off(() => SearchPage());
+    // Get.off(() => SearchPage());
   });
 }

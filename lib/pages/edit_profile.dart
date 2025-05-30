@@ -1,6 +1,8 @@
-import 'package:family_locator/controller/profile_controller.dart';
-import 'package:family_locator/widgets/button_widget.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'dart:io';
+
+import 'package:family_room/controller/profile_controller.dart';
+import 'package:family_room/widgets/button_widget.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -18,6 +20,7 @@ class _EditProfileState extends State<EditProfile> {
 
   @override
   Widget build(BuildContext context) {
+    _controller.getUserNameDP();
     return Scaffold(
         appBar: AppBar(
           title: const Text("Profile"),
@@ -130,16 +133,28 @@ class _EditProfileState extends State<EditProfile> {
                 child: _controller.dpImagePath.value.isEmpty
                     ? CircleAvatar(
                         radius: AppConstants.width * 0.3,
-                        child: const Text(
-                          "MK",
+                        child: Text(
+                          _controller.username.value
+                              .substring(0, 2)
+                              .toUpperCase(),
                           style: TextStyle(
                             fontSize: 40,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ) // Show initials if no image
-                    : CustomWidget.getImage(_controller.dpImagePath.value),
+                      )
+                    : _controller.dpImagePath.value.startsWith('http')
+                        ? CircleAvatar(
+                            radius: AppConstants.width * 0.3,
+                            child: CustomWidget.getImage(
+                                _controller.dpImagePath.value),
+                          )
+                        : CircleAvatar(
+                            radius: AppConstants.width * 0.3,
+                            backgroundImage:
+                                FileImage(File(_controller.dpImagePath.value)),
+                          ),
               );
             }),
             _buildEditIcon(),
@@ -157,8 +172,9 @@ class _EditProfileState extends State<EditProfile> {
       child: GestureDetector(
         onTap: () async {
           // Opens image picker and updates the profile image
-          _controller.dpImagePath.value = await CustomWidget.imagePickFrom();
-          if (_controller.dpImagePath.value.isNotEmpty) {
+          String tempPath = await CustomWidget.imagePickFrom();
+          if (tempPath.isNotEmpty) {
+            _controller.dpImagePath.value = tempPath;
             _controller.userNameEdit.value = true;
           }
         },

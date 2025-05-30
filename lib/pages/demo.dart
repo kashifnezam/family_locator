@@ -1,30 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:flutter/services.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
-}
+class NativeChannel {
+  // static const MethodChannel _channel =
+  //     MethodChannel('com.kashif.family_room/native_channel');
+  static const MethodChannel _channel =
+      MethodChannel('com.kashif.family_room/native_channel');
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return OSMViewer(
-      controller: SimpleMapController(
-        initPosition: GeoPoint(
-          latitude: 47.4358055,
-          longitude: 8.4737324,
-        ),
-        markerHome: const MarkerIcon(
-          icon: Icon(Icons.home),
-        ),
-      ),
-      zoomOption: const ZoomOption(
-        initZoom: 16,
-        minZoomLevel: 11,
-      ),
-    );
+  // Method to invoke native code
+  static Future<String?> getNativeData() async {
+    try {
+      // Calls a method on the native side (Java)
+      final String? result = await _channel.invokeMethod('getNativeData');
+      return result;
+    } on PlatformException catch (e) {
+      AppConstants.log.e("Failed to get native data: '${e.message}'.");
+      return null;
+    }
   }
 }

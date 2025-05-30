@@ -1,9 +1,10 @@
-import 'package:family_locator/api/firebase_api.dart';
-import 'package:family_locator/api/firebase_file_api.dart';
-import 'package:family_locator/utils/device_info.dart';
+import 'package:family_room/api/firebase_api.dart';
+import 'package:family_room/api/firebase_file_api.dart';
+import 'package:family_room/utils/device_info.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/offline_data.dart';
+import 'home_controller.dart';
 
 class ProfileController extends GetxController {
   RxString dpImagePath = "".obs;
@@ -15,6 +16,9 @@ class ProfileController extends GetxController {
   final isValid = true.obs;
   final RxString isNotValidMsg = "".obs;
 
+  // Here using Home controller to update edit dp and username
+  final HomeController homeController = Get.put(HomeController());
+  OfflineData offlineData = OfflineData();
   @override
   void onInit() {
     super.onInit();
@@ -22,11 +26,10 @@ class ProfileController extends GetxController {
   }
 
   Future<void> getUserNameDP() async {
-    username.value = (await OfflineData.getData("usr")) ?? "Unknown";
+    username.value = userInfo?["usr"] ?? "Not Available";
 
     userNameController.text = username.value;
-    dpImagePath.value =
-        await FirebaseApi.getDP("anonymous", DeviceInfo.deviceId!);
+    dpImagePath.value = userInfo?["dp"] ?? "NA";
     finalDpImagePath.value = dpImagePath.value;
   }
 
@@ -50,37 +53,28 @@ class ProfileController extends GetxController {
     isLoad.value = true;
     String usn = userNameController.text.trim();
     if (usn != username.value) {
-      if ((usn.length < 3 || usn.length > 15) &&
-          (usn.isEmpty || usn != username.value)) {
-        Get.snackbar(
-          backgroundColor: Colors.red.shade100,
-          'Error',
-          'Please enter valid Alphanumeric username not more than 15 letters',
-        );
-        return;
-      } else {
-        String username = usn.toLowerCase();
-        validateUsername(username);
-        if (isValid.value) {
-          int sts = await FirebaseApi.checkUsernameExists(username);
-          if (sts == 1) {
-            OfflineData.setData(
-                "usr", usn, true); // Proceed with the valid username
-            Get.snackbar(
-              username,
-              "username valid for 1 week, please LOGIN for permanent username",
-              backgroundColor: Colors.greenAccent,
-            );
-          } else if (sts == 0) {
-            isValid.value = false;
-            isNotValidMsg.value = "username already exists!";
-          } else if (sts == 2) {
-            isValid.value = false;
-            isNotValidMsg.value = "Device ID not found!";
-          } else {
-            isValid.value = false;
-            isNotValidMsg.value = "Something went wrong";
-          }
+      String usr = usn.toLowerCase();
+      validateUsername(usr);
+      if (isValid.value) {
+        int sts = await FirebaseApi.checkUsernameExists(usr);
+        if (sts == 1) {
+          offlineData.refreshUserData(DeviceInfo.deviceId);
+          homeController.username.value = usr;
+          username.value = usr;
+          Get.snackbar(
+            usr,
+            "username valid for 1 week, please LOGIN for permanent username",
+            backgroundColor: Colors.greenAccent,
+          );
+        } else if (sts == 0) {
+          isValid.value = false;
+          isNotValidMsg.value = "username already exists!";
+        } else if (sts == 2) {
+          isValid.value = false;
+          isNotValidMsg.value = "Device ID not found!";
+        } else {
+          isValid.value = false;
+          isNotValidMsg.value = "Something went wrong";
         }
       }
     }
@@ -97,6 +91,8 @@ class ProfileController extends GetxController {
         if (res == 0) {
           dpImagePath.value = url;
           finalDpImagePath.value = url;
+          offlineData.refreshUserData(DeviceInfo.deviceId);
+          homeController.dpImagePath.value = url;
         } else {
           dpImagePath.value = "";
         }

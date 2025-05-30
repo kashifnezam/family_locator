@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:family_locator/utils/constants.dart';
-import 'package:family_locator/widgets/custom_widget.dart';
+import 'package:family_room/utils/constants.dart';
+import 'package:family_room/widgets/custom_widget.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class FirebaseFileApi {
