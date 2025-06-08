@@ -5,8 +5,10 @@ import 'package:family_room/utils/custom_alert.dart';
 import 'package:family_room/utils/offline_data.dart';
 import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../api/firebase_api.dart';
 import '../api/save_data.dart';
 import '../utils/device_info.dart';
@@ -20,12 +22,52 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  static const platform = MethodChannel('com.kashif.location_service');
   LatLng? _currentLocation;
 
   @override
   void initState() {
     super.initState();
     saveUserData();
+  }
+
+  Future<void> requestLocationPermission() async {
+    var status = await [
+      Permission.location,
+      Permission.locationAlways,
+      Permission.locationWhenInUse
+    ].request();
+
+    if ((status[Permission.location]?.isGranted ?? false) &&
+        (status[Permission.locationAlways]?.isGranted ?? false) &&
+        (status[Permission.locationWhenInUse]?.isGranted ?? false)) {
+      startLocationService();
+    } else if ((status[Permission.location]?.isDenied ?? false) ||
+
+        (status[Permission.locationAlways]?.isDenied ?? false) ||
+        (status[Permission.locationWhenInUse]?.isDenied ?? false)) {
+      print('Location permission denied');
+    } else if ((status[Permission.location]?.isPermanentlyDenied ?? false) ||
+        (status[Permission.locationAlways]?.isPermanentlyDenied ?? false) ||
+        (status[Permission.locationWhenInUse]?.isPermanentlyDenied ?? false)) {
+      openAppSettings();
+    }
+  }
+
+  Future<void> startLocationService() async {
+    try {
+      await platform.invokeMethod('startLocationUpdates');
+    } on PlatformException catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  Future<void> stopLocationService() async {
+    try {
+      await platform.invokeMethod('stopLocationUpdates');
+    } on PlatformException catch (e) {
+      print("Failed to stop location service: ${e.message}");
+    }
   }
 
   /// Saves user data and uploads anonymous data if necessary
@@ -52,6 +94,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // 3. Retrieve user details and decide whether to save anonymous data
     final userInform = await offlineData.getUserDetails();
+    await offlineData.storeObject("deviceId", DeviceInfo.deviceId);
+
     if (!mounted) return;
 
     if (userInform?["usr"] == null) {
@@ -69,6 +113,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // 5. Navigate to Home screen
     if (mounted) {
       Get.off(() => const Home());
+      await startLocationService();
     }
   }
 

@@ -66,4 +66,12 @@ class OfflineData {
     userInfo = _cachedUserData;
     return _cachedUserData;
   }
+
+  Future<void> storeObject(String key, String? value) async {
+      if (_prefs == null) init();
+      if (value != null) {
+        await _prefs?.setString(key, value);
+    }
+     AppConstants.log.e( _prefs?.get("deviceId"));
+  }
 }

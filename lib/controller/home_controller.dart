@@ -37,6 +37,7 @@ class HomeController extends GetxController {
         for (var doc in roomSnapshot.docs) {
           final userId = doc.id;
           final currLoc = doc.get('currLoc');
+          print(currLoc);
           final location = LocationUtils.parseLocation(currLoc);
 
           if (location != null) {
