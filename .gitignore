@@ -1,6 +1,11 @@
 # Miscellaneous
 *.class
 *.log
+*.cc
+*.cmake
+*.lock
+*.swift
+*.bin
 *.pyc
 *.swp
 .DS_Store
