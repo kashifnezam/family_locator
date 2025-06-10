@@ -30,7 +30,7 @@ class FirebaseApi {
 
   static Future<void> updateLocation(String loc, String id) async {
     _firestore
-        .collection("anonymous")
+        .collection("user")
         .doc(id)
         .set({'currLoc': loc}, SetOptions(merge: true));
   }
@@ -152,7 +152,7 @@ class FirebaseApi {
       return -4;
     }
     try {
-      await _firestore.collection('anonymous').doc(deviceId).set({
+      await _firestore.collection('user').doc(deviceId).set({
         'roomId': FieldValue.arrayUnion([roomId]),
       }, SetOptions(merge: true));
       await _firestore.collection('roomDetail').doc(roomId).set({
@@ -186,7 +186,7 @@ class FirebaseApi {
       if (isOwner) {
         modifyDeviceInCollection(
             "roomDetail", roomId, deviceId, "members", true);
-        modifyDeviceInCollection("anonymous", deviceId, roomId, "roomId", true);
+        modifyDeviceInCollection("user", deviceId, roomId, "roomId", true);
         userJoinLeft("joined", roomId, "himself again (owner)");
         return 1;
       }
@@ -252,22 +252,22 @@ class FirebaseApi {
     try {
       // Query the 'anonymous' collection to check if the username exists
       QuerySnapshot querySnapshot = await _firestore
-          .collection('anonymous')
+          .collection('user')
           .where('usr', isEqualTo: username)
           .get();
 
       if (querySnapshot.docs.isEmpty) {
         // Check if DeviceInfo.deviceId is available
-        String? deviceId = DeviceInfo.deviceId;
-        if (deviceId == null) {
+        String? uid = DeviceInfo.userUID;
+        if (uid == null) {
           AppConstants.log.e('Device ID is not available.');
           return 2; // Fail gracefully if deviceId is null
         }
 
         // If no such username, update the 'usr' field with the new username
         await FirebaseFirestore.instance
-            .collection('anonymous')
-            .doc(deviceId)
+            .collection('user')
+            .doc(uid)
             .set({
           'usr': username,
         }, SetOptions(merge: true));
@@ -394,7 +394,7 @@ class FirebaseApi {
         DocumentReference roomDetailDoc =
             _firestore.collection("roomDetail").doc(roomNo);
         DocumentReference anonymousDoc =
-            _firestore.collection("anonymous").doc(userId);
+            _firestore.collection("user").doc(userId);
 
         // Remove the userId from the members list in roomDetail collection
         transaction.update(roomDetailDoc, {
@@ -467,7 +467,7 @@ class FirebaseApi {
   }
 
   static Future<List<String>> getAllJoinedRooms(String userId) async {
-    return await getRoomMembers(userId, "anonymous", "roomId");
+    return await getRoomMembers(userId, "user", "roomId");
   }
 
   //Version Updates

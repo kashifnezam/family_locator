@@ -56,7 +56,7 @@ class RoomDialogController extends GetxController {
       // Process the form
       if (isCreatingRoom.value) {
         final response = await FirebaseApi.createRoom(
-            DeviceInfo.deviceId!, roomController.text, nameController.text);
+            DeviceInfo.userUID!, roomController.text, nameController.text);
 
         if (response == 1) {
           String owner = await FirebaseApi.getOwner(roomController.text);
@@ -78,7 +78,7 @@ class RoomDialogController extends GetxController {
           Get.to(
             () => ChatRoom(
               roomId: roomController.text,
-              userId: DeviceInfo.deviceId.toString(),
+              userId: DeviceInfo.userUID.toString(),
               roomName: "Chat Room",
               owner: owner,
             ),
@@ -106,7 +106,7 @@ class RoomDialogController extends GetxController {
         }
       } else {
         final response = await FirebaseApi.roomJoin(
-            DeviceInfo.deviceId!, roomController.text);
+            DeviceInfo.userUID!, roomController.text);
         final name = await FirebaseApi.getRoomName(roomController.text);
 
         if (response == 1) {
@@ -123,7 +123,7 @@ class RoomDialogController extends GetxController {
           Get.to(
             () => ChatRoom(
               roomId: roomController.text,
-              userId: DeviceInfo.deviceId.toString(),
+              userId: DeviceInfo.userUID.toString(),
               roomName: name,
               owner: owner,
             ),

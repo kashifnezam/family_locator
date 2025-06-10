@@ -30,6 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # Animation Lottie
+  lottie: ^3.3.1
+
+
   get: ^4.6.6
   firebase_core: ^3.2.0
   firebase_storage: ^12.3.3 # Store file on firebase
@@ -68,9 +73,6 @@ dependencies:
   auto_size_text: ^3.0.0
   awesome_notifications: ^0.10.1
 
-  # share_plus: ^10.1.1 # Check for the latest version
-  # path_provider: ^2.1.5 # For saving files
-  # image_gallery_saver: ^2.0.3 # For saving images to gallery
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -120,6 +122,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/logo/
+    - assets/animations/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

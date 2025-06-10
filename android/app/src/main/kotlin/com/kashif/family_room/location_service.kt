@@ -1,5 +1,6 @@
 package com.kashif.family_room
 
+import kotlin.math.roundToInt
 import android.annotation.TargetApi
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -66,9 +67,9 @@ class LocationService : Service() {
         }
     }
 
-    private fun getDeviceIdFromSharedPreferences(): String {
+    private fun getUIDFromSharedPreferences(): String {
         val sharedPref = getSharedPreferences("FlutterSharedPreferences", MODE_PRIVATE)
-        return sharedPref.getString("flutter.deviceId", "") ?: ""
+        return sharedPref.getString("flutter.uid", "") ?: ""
     }
 
     private fun startLocationUpdates() {
@@ -96,7 +97,7 @@ class LocationService : Service() {
 
     private fun sendLocationToServer(location: Location) {
         val firestore = FirebaseFirestore.getInstance()
-        val userId = getDeviceIdFromSharedPreferences()
+        val userId = getUIDFromSharedPreferences()
 
         if (userId.isEmpty()) {
             Log.e("LocationSharing", "Device ID not found in SharedPreferences")
@@ -113,7 +114,7 @@ class LocationService : Service() {
         )
 
 
-        firestore.collection("anonymous")
+        firestore.collection("user")
             .document(userId)
             .set(locationData, SetOptions.merge())
             .addOnSuccessListener {
@@ -155,25 +156,123 @@ class LocationService : Service() {
 }
 
 object LocationUtils {
+
+    private const val THRESHOLD_METERS = 30.0
+
     fun addLocationToSharedPrefs(context: Context, latitude: Double, longitude: Double) {
-        // Get deviceId from FlutterSharedPreferences
-        val flutterPrefs: SharedPreferences =
-            context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-        val deviceId = flutterPrefs.getString("flutter.deviceId", "") ?: ""
+        val prefs = context.getSharedPreferences("LocationData", Context.MODE_PRIVATE)
+        val encoded = prefs.getString("encoded_polyline", "") ?: ""
 
-        // Prepare location storage in separate SharedPreferences
-        val locationPrefs = context.getSharedPreferences("LocationData", Context.MODE_PRIVATE)
-        val locationsJsonString = locationPrefs.getString("location_list", "[]")
-        val jsonArray = JSONArray(locationsJsonString)
+        // Decode existing polyline into list of points
+        val latLngList = PolylineDecoder.decode(encoded).toMutableList()
 
-        val locationObject = JSONObject().apply {
-            put("latitude", latitude)
-            put("longitude", longitude)
-            put("deviceId", deviceId)
-            put("timestamp", System.currentTimeMillis())
+        val newPoint = Pair(latitude, longitude)
+
+        // Only add if movement is significant
+        if (latLngList.isNotEmpty()) {
+            val last = latLngList.last()
+            val distance = haversineDistance(last.first, last.second, newPoint.first, newPoint.second)
+            if (distance < THRESHOLD_METERS) {
+                return // Do not store insignificant movement
+            }
         }
 
-        jsonArray.put(locationObject)
-        locationPrefs.edit().putString("location_list", jsonArray.toString()).apply()
+        latLngList.add(newPoint)
+        val newEncoded = PolylineEncoder.encode(latLngList)
+
+        prefs.edit().putString("encoded_polyline", newEncoded).apply()
+    }
+
+    private fun haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371000.0 // Earth radius in meters
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return R * c
+    }
+}
+
+
+object PolylineEncoder {
+
+    fun encode(points: List<Pair<Double, Double>>): String {
+        var prevLat = 0
+        var prevLng = 0
+        val result = StringBuilder()
+
+        for ((lat, lng) in points) {
+            val latE5 = (lat * 1e5).roundToInt()
+            val lngE5 = (lng * 1e5).roundToInt()
+
+            val dLat = latE5 - prevLat
+            val dLng = lngE5 - prevLng
+
+            encodeValue(dLat, result)
+            encodeValue(dLng, result)
+
+            prevLat = latE5
+            prevLng = lngE5
+        }
+
+        return result.toString()
+    }
+
+    private fun encodeValue(v: Int, result: StringBuilder) {
+        var value = if (v < 0) {
+            // For negative numbers: ZigZag encoding
+            (v shl 1).inv()  // Replaced ~(v shl 1) with (v shl 1).inv()
+        } else {
+            // For non-negative numbers
+            v shl 1
+        }
+
+        while (value >= 0x20) {
+            result.append(((0x20 or (value and 0x1f)) + 63).toChar())
+            value = value shr 5
+        }
+        result.append((value + 63).toChar())
+    }}
+object PolylineDecoder {
+    fun decode(encoded: String): List<Pair<Double, Double>> {
+        val poly = mutableListOf<Pair<Double, Double>>()
+        var index = 0
+        val len = encoded.length
+        var lat = 0
+        var lng = 0
+
+        while (index < len) {
+            val resultLat = decodeValue(encoded, index)
+            index = resultLat.second
+            lat += resultLat.first
+
+            val resultLng = decodeValue(encoded, index)
+            index = resultLng.second
+            lng += resultLng.first
+
+            val latitude = lat / 1e5
+            val longitude = lng / 1e5
+            poly.add(Pair(latitude, longitude))
+        }
+
+        return poly
+    }
+
+    private fun decodeValue(encoded: String, startIndex: Int): Pair<Int, Int> {
+        var index = startIndex
+        var shift = 0
+        var result = 0
+
+        while (true) {
+            val b = encoded[index++].code - 63
+            result = result or ((b and 0x1F) shl shift)
+            shift += 5
+            if (b < 0x20) break
+        }
+
+        val delta = if ((result and 1) != 0) -(result shr 1) else (result shr 1)
+        return Pair(delta, index)
     }
 }

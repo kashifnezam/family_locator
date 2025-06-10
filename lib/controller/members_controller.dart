@@ -133,7 +133,7 @@ class MembersController extends GetxController {
     if (dpImagePath.value.isNotEmpty &&
         dpImagePath.value != finalDpImagePath.value) {
       String url = await FirebaseFileApi.uploadImage(
-          "${DeviceInfo.deviceId}+${groupName.value}", dpImagePath.value, "dp");
+          "${DeviceInfo.userUID}+${groupName.value}", dpImagePath.value, "dp");
       if (url.isNotEmpty) {
         int res = await FirebaseFileApi.updateImagePath(
             "roomDetail", membersMap[0]["roomId"], url, "dp");

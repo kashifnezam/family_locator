@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:family_room/api/firebase_tpr_api.dart';
+import 'package:family_room/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -27,12 +28,12 @@ class HistoryTPRController extends GetxController {
   void getTPR({List<DateTime> dateRange = const []}) async {
     final locationHistoryData =
         await FirebaseTprApi.getLocationHistory(userId, dateRange: dateRange);
-    // Map each location entry to a LatLng object
-    polylinePoints.value = locationHistoryData.map((location) {
-      final locationData = location['location'];
-      return LatLng(locationData['latitude'], locationData['longitude']);
+    // This will flatten all locations from all history entries into one list of points
+    polylinePoints.value = locationHistoryData.expand((location) {
+      return (location['locations'] as List).map((coord) {
+        return LatLng(coord[0], coord[1]); // latitude is first, longitude is second
+      });
     }).toList();
-
     //String Time for Markers:
     if (locationHistoryData.isNotEmpty) {
       markerInfo.clear();

@@ -32,7 +32,7 @@ class OfflineData {
 
     try {
       DocumentSnapshot userSnapshot =
-          await firestore.collection("anonymous").doc(userId).get();
+          await firestore.collection("user").doc(userId).get();
       if (userSnapshot.exists) {
         // Update both cache and SharedPreferences
         _cachedUserData = userSnapshot.data() as Map<String, dynamic>?;
@@ -67,11 +67,22 @@ class OfflineData {
     return _cachedUserData;
   }
 
+  Future<dynamic> getObject(String ?key) async{
+    if (_prefs == null) init();
+    if(key != null){
+      return await _prefs?.getString(key);
+    }
+  }
+
   Future<void> storeObject(String key, String? value) async {
       if (_prefs == null) init();
       if (value != null) {
         await _prefs?.setString(key, value);
     }
-     AppConstants.log.e( _prefs?.get("deviceId"));
+  }
+
+  static Future<void> clearAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }

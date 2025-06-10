@@ -33,7 +33,7 @@ class UsernameDialogController extends GetxController {
       if (sts == 1) {
         OfflineData offlineData = OfflineData();
         offlineData.refreshUserData(
-            DeviceInfo.deviceId); // Proceed with the valid username
+            DeviceInfo.userUID); // Proceed with the valid username
         Get.back();
         // Get.snackbar(
         //   username,

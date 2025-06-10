@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'package:family_room/api/firebase_tpr_api.dart';
+import 'package:family_room/pages/auth/authentication.dart';
 import 'package:family_room/pages/home.dart';
 import 'package:family_room/utils/constants.dart';
 import 'package:family_room/utils/custom_alert.dart';
 import 'package:family_room/utils/offline_data.dart';
 import 'package:family_room/widgets/custom_widget.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -22,12 +25,14 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  static const platform = MethodChannel('com.kashif.location_service');
   LatLng? _currentLocation;
+  User? user;
+  String? deviceId;
 
   @override
   void initState() {
     super.initState();
+    user = FirebaseAuth.instance.currentUser;
     saveUserData();
   }
 
@@ -55,6 +60,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> startLocationService() async {
+    const platform = MethodChannel('com.kashif.location_service');
+
     try {
       await platform.invokeMethod('startLocationUpdates');
     } on PlatformException catch (e) {
@@ -62,13 +69,13 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  Future<void> stopLocationService() async {
-    try {
-      await platform.invokeMethod('stopLocationUpdates');
-    } on PlatformException catch (e) {
-      print("Failed to stop location service: ${e.message}");
-    }
-  }
+  // Future<void> stopLocationService() async {
+  //   try {
+  //     await platform.invokeMethod('stopLocationUpdates');
+  //   } on PlatformException catch (e) {
+  //     print("Failed to stop location service: ${e.message}");
+  //   }
+  // }
 
   /// Saves user data and uploads anonymous data if necessary
   Future<void> saveUserData() async {
@@ -91,43 +98,41 @@ class _SplashScreenState extends State<SplashScreen> {
     final OfflineData offlineData = OfflineData();
     await offlineData.init();
     await DeviceInfo.getDetails();
+    deviceId = DeviceInfo.deviceId;
 
     // 3. Retrieve user details and decide whether to save anonymous data
     final userInform = await offlineData.getUserDetails();
-    await offlineData.storeObject("deviceId", DeviceInfo.deviceId);
+    await offlineData.storeObject("uid", user?.uid);
 
     if (!mounted) return;
 
-    if (userInform?["usr"] == null) {
-      await SaveDataApi.saveAnonymousData(
-        DeviceInfo.deviceId,
-        DeviceInfo.macAddress,
-        DeviceInfo.ipAddress,
-      );
-      await offlineData.refreshUserData(DeviceInfo.deviceId);
-    }
+    await offlineData.refreshUserData(user?.uid);
 
     // 4. Initialize location tracking
     await initializeLocationTracking();
 
     // 5. Navigate to Home screen
     if (mounted) {
-      Get.off(() => const Home());
+      Get.off(()=> Home());
       await startLocationService();
     }
   }
 
   /// Initializes location tracking and sets up current location updates
   Future<void> initializeLocationTracking() async {
-    await LocationUtils.initializeBatchUpload();
+    // await LocationUtils.initializeBatchUpload();
+
+    if(user != null && user?.uid != null){
+      FirebaseTprApi.cleanupOldRecords(user!.uid);
+    }
     await LocationUtils.getCurrentLocation(
       onLocationLoaded: (location) {
         _currentLocation = location;
         if (_currentLocation != null && DeviceInfo.deviceId != null) {
-          FirebaseApi.updateLocation(
-            _currentLocation.toString(),
-            DeviceInfo.deviceId!,
-          );
+          // FirebaseApi.updateLocation(
+          //   _currentLocation.toString(),
+          //   DeviceInfo.deviceId!,
+          // );
         }
       },
       onError: (error) {
@@ -136,33 +141,13 @@ class _SplashScreenState extends State<SplashScreen> {
       onStartMoving: () {
         AppConstants.log.i("Person Starts Moving");
         if (_currentLocation != null && DeviceInfo.deviceId != null) {
-          FirebaseApi.updateLocation(
-            _currentLocation.toString(),
-            DeviceInfo.deviceId!,
-          );
+          // FirebaseApi.updateLocation(
+          //   _currentLocation.toString(),
+          //   DeviceInfo.deviceId!,
+          // );
         }
       },
     );
-      
-//     await BackgroundLocation.setAndroidConfiguration(1000);
-//     // Start the background location service with a specified distance filter
-//     await BackgroundLocation.startLocationService(distanceFilter: 20);
-
-// // Listen for location updates
-//     BackgroundLocation.getLocationUpdates((location) {
-//       // Check if current location and device ID are not null
-//       if (_currentLocation != null && DeviceInfo.deviceId != null) {
-//         String currLoc = LatLng(
-//                 location.latitude!.toDouble(), location.longitude!.toDouble())
-//             .toString();
-//         // Update the location in Firebase
-//         FirebaseApi.updateLocation(
-//           currLoc,
-//           DeviceInfo.deviceId!,
-//         );
-//         AppConstants.log.e("Cuurent Location: $currLoc");
-//       }
-//     });
   }
 
   @override

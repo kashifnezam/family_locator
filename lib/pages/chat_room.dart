@@ -214,7 +214,7 @@ class ChatRoomState extends State<ChatRoom> {
                                         controller.userNames[userId] ??
                                             'Unknown';
                                     final firstLetter = userName.isNotEmpty
-                                        ? userId == DeviceInfo.deviceId
+                                        ? userId == DeviceInfo.userUID
                                             ? "You"
                                             : userName[0].toUpperCase()
                                         : '?';
@@ -234,7 +234,7 @@ class ChatRoomState extends State<ChatRoom> {
                                               border: Border.all(
                                                   color: Colors.blue),
                                               color:
-                                                  userId == DeviceInfo.deviceId
+                                                  userId == DeviceInfo.userUID
                                                       ? Colors.blueGrey
                                                       : Colors.white,
                                               shape: BoxShape.circle,
@@ -244,7 +244,7 @@ class ChatRoomState extends State<ChatRoom> {
                                                 firstLetter,
                                                 style: TextStyle(
                                                   color: userId ==
-                                                          DeviceInfo.deviceId
+                                                          DeviceInfo.userUID
                                                       ? Colors.white
                                                       : Colors.green,
                                                   fontWeight: FontWeight.bold,
@@ -544,7 +544,7 @@ class ChatRoomState extends State<ChatRoom> {
                                                           false);
                                                   FirebaseApi
                                                       .modifyDeviceInCollection(
-                                                          "anonymous",
+                                                          "user",
                                                           id,
                                                           widget.roomId,
                                                           "roomId",

@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'constants.dart';
 import 'location_utils.dart';
 
@@ -5,6 +7,7 @@ class DeviceInfo {
   static String? macAddress;
   static String? ipAddress;
   static String? deviceId;
+  static String? userUID;
   static Future<void> getDetails() async {
     try {
       // Get MAC Address
@@ -18,6 +21,8 @@ class DeviceInfo {
       // Get Device ID
       deviceId = await LocationUtils.getDeviceId();
       AppConstants.log.i('Device ID: $deviceId');
+
+      userUID = FirebaseAuth.instance.currentUser?.uid;
     } catch (e) {
       AppConstants.log.e('Error in getDetails: $e');
     }

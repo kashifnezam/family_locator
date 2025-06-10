@@ -20,8 +20,8 @@ class FamilyRoomController extends GetxController {
     // Listen for changes in the user's room memberships
     _firestore
         .collection(
-            'anonymous') // Assuming there's a collection tracking user rooms
-        .doc(DeviceInfo.deviceId!) // Document ID based on device ID
+            'user') // Assuming there's a collection tracking user rooms
+        .doc(DeviceInfo.userUID!) // Document ID based on device ID
         .snapshots()
         .listen((snapshot) {
       if (snapshot.exists && snapshot.data() != null) {

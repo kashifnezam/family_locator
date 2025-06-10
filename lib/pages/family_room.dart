@@ -84,7 +84,7 @@ class FamilyRoom extends StatelessWidget {
     Get.to(
       () => ChatRoom(
         roomId: room["roomNo"],
-        userId: DeviceInfo.deviceId.toString(),
+        userId: DeviceInfo.userUID.toString(),
         roomName: room["name"],
         owner: room["owner"],
       ),

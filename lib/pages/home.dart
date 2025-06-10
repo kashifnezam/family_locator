@@ -1,14 +1,19 @@
 import 'package:family_room/controller/home_controller.dart';
+import 'package:family_room/pages/auth/authentication.dart';
 import 'package:family_room/pages/family_room.dart';
 import 'package:family_room/pages/support_us.dart';
 import 'package:family_room/utils/constants.dart';
+import 'package:family_room/utils/offline_data.dart';
 import 'package:family_room/widgets/custom_widget.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cache/flutter_map_cache.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
 import 'package:upgrader/upgrader.dart';
+import '../utils/custom_alert.dart';
 import '../utils/device_info.dart';
 import '../widgets/button_widget.dart';
 import 'edit_profile.dart';
@@ -114,8 +119,30 @@ class _HomeState extends State<Home> {
             ),
             _buildDrawerItem(
               icon: Icons.login_outlined,
-              color: Colors.white60,
-              label: "Login",
+              label: "Logout",
+              onTap: () async {
+                try {
+                  // 1. Sign out from Firebase
+                  await FirebaseAuth.instance.signOut();
+
+                  // 2. Clear offline data (SharedPreferences)
+                  await OfflineData.clearAll();
+                  const platform = MethodChannel('com.kashif.location_service');
+                  await platform.invokeMethod('stopLocationUpdates');
+
+                  // 3. Navigate to authentication screen
+                  Get.offAll(() => const Authentication());
+
+                } catch (e) {
+                  // Optional: Add error handling
+                  debugPrint('Logout error: $e');
+                  CustomAlert.errorAlert(
+                    title: "Logout Failed",
+                    context, // Make sure context is available
+                    "Couldn't logout properly. Please try again.",
+                  );
+                }
+              }
             ),
           ],
         ),
@@ -132,7 +159,7 @@ class _HomeState extends State<Home> {
         Obx(
           () => CircleAvatar(
             backgroundColor: Colors.blueGrey,
-            radius: AppConstants.width * 0.12,
+            radius: AppConstants.width * 0.11,
             child: controller.dpImagePath.value.isNotEmpty
                 ? CustomWidget.getImage(controller.dpImagePath.value)
                 : Flexible(
@@ -158,7 +185,7 @@ class _HomeState extends State<Home> {
                       color: Colors.white),
                 ),
                 Text(
-                  DeviceInfo.deviceId ?? "Unknown Device",
+                  DeviceInfo.userUID ?? "Unknown Device",
                   style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -291,7 +318,7 @@ class _HomeState extends State<Home> {
       final String initials = (userDetails.isNotEmpty &&
               userDetails.length > 1 &&
               userDetails[1].isNotEmpty)
-          ? (userId == DeviceInfo.deviceId
+          ? (userId == DeviceInfo.userUID
               ? "You"
               : userDetails[1].substring(0, 2).toUpperCase())
           : '?';
@@ -393,7 +420,7 @@ class _HomeState extends State<Home> {
       String initials, String userId, List<String> userDetails) {
     return userDetails.isNotEmpty &&
             userDetails[0].isNotEmpty &&
-            userId != DeviceInfo.deviceId
+            userId != DeviceInfo.userUID
         ? Container(
             decoration: BoxDecoration(
               border: Border.all(color: Colors.red),
@@ -404,7 +431,7 @@ class _HomeState extends State<Home> {
         : Container(
             decoration: BoxDecoration(
               border: Border.all(color: Colors.black),
-              color: userId == DeviceInfo.deviceId
+              color: userId == DeviceInfo.userUID
                   ? Colors.blueGrey
                   : Colors.white,
               shape: BoxShape.circle,
@@ -413,7 +440,7 @@ class _HomeState extends State<Home> {
               child: Text(
                 initials,
                 style: TextStyle(
-                  color: userId == DeviceInfo.deviceId
+                  color: userId == DeviceInfo.userUID
                       ? Colors.white
                       : Colors.green,
                   fontWeight: FontWeight.bold,

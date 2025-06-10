@@ -9,7 +9,7 @@ class SaveDataApi {
     if (deviceId != null) {
       // Add data to Firebase if device ID is valid
       await FirebaseApi.addAnonymousData(
-        "anonymous",
+        "user",
         deviceId,
         AnonymousModel(
           id: deviceId,

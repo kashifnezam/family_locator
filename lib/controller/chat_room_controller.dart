@@ -204,7 +204,7 @@ class ChatRoomController extends GetxController {
 
       // Fetch user details for combined members and pending list
       final userDocs = await _firestore
-          .collection('anonymous')
+          .collection('user')
           .where(FieldPath.documentId, whereIn: combinedList)
           .get();
 
@@ -215,7 +215,7 @@ class ChatRoomController extends GetxController {
 
       // Fetch only member details (excluding pending users)
       final membersDocs = await _firestore
-          .collection('anonymous')
+          .collection('user')
           .where(FieldPath.documentId, whereIn: members)
           .get();
 
@@ -360,7 +360,7 @@ class ChatRoomController extends GetxController {
   }
 
   void updatePolyline() {
-    final myLoc = userLocations[DeviceInfo.deviceId];
+    final myLoc = userLocations[DeviceInfo.userUID];
     if (myLoc != null) {
       final waypoints =
           userLocations.values.where((loc) => loc != myLoc).toList();
@@ -412,7 +412,7 @@ class ChatRoomController extends GetxController {
         // Update user locations based on member IDs
         if (memberIds.isNotEmpty) {
           _firestore
-              .collection('anonymous')
+              .collection('user')
               .where(FieldPath.documentId, whereIn: memberIds)
               .snapshots()
               .listen((anonymousSnapshot) {

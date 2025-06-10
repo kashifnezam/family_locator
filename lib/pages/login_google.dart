@@ -66,9 +66,9 @@ class SearchPageState extends State<SearchPage> {
       },
       onStartMoving: () {
         AppConstants.log.i("Person Starts Moving");
-        if (DeviceInfo.deviceId != null) {
+        if (DeviceInfo.userUID != null) {
           FirebaseApi.updateLocation(
-              _currentLocation.toString(), DeviceInfo.deviceId!);
+              _currentLocation.toString(), DeviceInfo.userUID!);
         }
       },
     );
@@ -77,7 +77,7 @@ class SearchPageState extends State<SearchPage> {
 
   Future<void> saveUserData() async {
     await DeviceInfo.getDetails().then((x) {
-      SaveDataApi.saveAnonymousData(DeviceInfo.deviceId, DeviceInfo.macAddress,
+      SaveDataApi.saveAnonymousData(DeviceInfo.userUID, DeviceInfo.macAddress,
           DeviceInfo.ipAddress);
     });
   }

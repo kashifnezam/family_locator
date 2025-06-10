@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:family_room/utils/offline_data.dart';
 import 'package:latlong2/latlong.dart';
 import '../utils/constants.dart';
 import '../utils/device_info.dart';
@@ -11,8 +12,8 @@ class FirebaseTprApi {
   /// Method to batch upload location updates
   static Future<void> uploadBatchLocations() async {
     if (_locationBuffer.isEmpty) return;
-
-    final userId = DeviceInfo.deviceId;
+    OfflineData offlineData = OfflineData();
+    final userId = await offlineData.getObject("uid");
     if (userId == null) return;
 
     final userDocRef = _firestore.collection('History_TPR').doc(userId);
@@ -30,17 +31,13 @@ class FirebaseTprApi {
       await batch.commit();
       _locationBuffer.clear();
 
-      if (!_hasCleanedUp) {
-        await _cleanupOldRecords(userId);
-        _hasCleanedUp = true;
-      }
-    } catch (e) {
+       } catch (e) {
       AppConstants.log.e("Error uploading location batch: $e");
     }
   }
 
   /// Method to remove records older than 3 days
-  static Future<void> _cleanupOldRecords(String userId) async {
+  static Future<void> cleanupOldRecords(String userId) async {
     final cutoffDate = DateTime.now().subtract(Duration(days: 3));
 
     try {
@@ -85,8 +82,11 @@ class FirebaseTprApi {
           .get();
 
       return snapshot.docs.map((doc) {
+        final encodedPolyline = doc['encodedPolyline'] as String;
+        final decodedLocations = decodePolyline(encodedPolyline); // Your polyline decoder function from previous message
+
         return {
-          'location': doc['location'],
+          'locations': decodedLocations, // List<List<double>> of lat/lng points
           'timestamp': (doc['timestamp'] as Timestamp).toDate(),
         };
       }).toList();
@@ -104,4 +104,41 @@ class FirebaseTprApi {
       'deviceId': DeviceInfo.deviceId,
     });
   }
+}
+
+List<List<double>> decodePolyline(String encoded) {
+  List<List<double>> points = [];
+  int index = 0;
+  int lat = 0;
+  int lng = 0;
+
+  while (index < encoded.length) {
+    int shift = 0;
+    int result = 0;
+    int b;
+
+    // Decode latitude
+    do {
+      b = encoded.codeUnitAt(index++) - 63;
+      result |= (b & 0x1F) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    int dlat = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
+    lat += dlat;
+
+    // Decode longitude
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.codeUnitAt(index++) - 63;
+      result |= (b & 0x1F) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    int dlng = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
+    lng += dlng;
+
+    points.add([lat / 1e5, lng / 1e5]);
+  }
+
+  return points;
 }

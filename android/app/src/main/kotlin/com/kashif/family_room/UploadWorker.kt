@@ -1,56 +1,60 @@
-package com.kashif.family_room
-
 import android.content.Context
+import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import android.util.Log
-import com.google.firebase.database.FirebaseDatabase
-import org.json.JSONArray
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import java.util.concurrent.CountDownLatch
 
 class UploadWorker(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
-        val sharedPref = applicationContext.getSharedPreferences("LocationData", Context.MODE_PRIVATE)
-        val locationsJsonString = sharedPref.getString("location_list", "[]")
-        val jsonArray = JSONArray(locationsJsonString)
+        Log.d("UploadWorker", "Worker is running...")
 
-        if (jsonArray.length() == 0) {
-            Log.d("UploadWorker", "No locations to upload")
+        val sharedPref = applicationContext.getSharedPreferences("LocationData", Context.MODE_PRIVATE)
+        val flutterPrefs = applicationContext.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val uid = flutterPrefs.getString("flutter.uid", "") ?: ""
+
+        if (uid.isEmpty()) {
+            Log.e("UploadWorker", "Device ID not found")
+            return Result.failure()
+        }
+
+        val encodedPolyline = sharedPref.getString("encoded_polyline", "") ?: ""
+
+        if (encodedPolyline.isEmpty()) {
+            Log.d("UploadWorker", "No encoded polyline to upload")
             return Result.success()
         }
 
-        val locationsToUpload = mutableListOf<Map<String, Any>>()
-        for (i in 0 until jsonArray.length()) {
-            val obj = jsonArray.getJSONObject(i)
-            val map = mapOf(
-                "latitude" to obj.getDouble("latitude"),
-                "longitude" to obj.getDouble("longitude"),
-                "deviceId" to obj.getString("deviceId"),
-                "timestamp" to obj.getLong("timestamp")
-            )
-            locationsToUpload.add(map)
-        }
-        Log.d("UploadWorker", "Uploading ${locationsToUpload.size} locations")
+        val firestore = FirebaseFirestore.getInstance()
+        val userDocRef = firestore.collection("History_TPR").document(uid)
+        val batch = firestore.batch()
 
-        val uploadSuccess = uploadLocationsBatch(locationsToUpload)
+        val locRef = userDocRef.collection("locations").document()
+        val data = mapOf(
+            "encodedPolyline" to encodedPolyline,
+            "timestamp" to FieldValue.serverTimestamp()
+        )
+        batch.set(locRef, data)
 
-        return if (uploadSuccess) {
-            sharedPref.edit().putString("location_list", "[]").apply()
-            Result.success()
-        } else {
-            Result.retry()
-        }
-    }
+        var result: Result = Result.retry()
+        val latch = CountDownLatch(1)
 
-    private fun uploadLocationsBatch(locations: List<Map<String, Any>>): Boolean {
-        return try {
-            val database = FirebaseDatabase.getInstance().reference.child("locations_batch")
-            val batchId = System.currentTimeMillis().toString()
-            database.child(batchId).setValue(locations)
-            true
-        } catch (e: Exception) {
-            Log.e("UploadWorker", "Upload failed: ${e.message}")
-            false
-        }
+        batch.commit()
+            .addOnSuccessListener {
+                Log.d("UploadWorker", "Encoded polyline uploaded successfully")
+                sharedPref.edit().putString("encoded_polyline", "").apply()
+                result = Result.success()
+                latch.countDown()
+            }
+            .addOnFailureListener { e ->
+                Log.e("UploadWorker", "Upload failed: ${e.message}")
+                result = Result.retry()
+                latch.countDown()
+            }
+
+        latch.await()
+        return result
     }
 }

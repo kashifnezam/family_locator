@@ -30,14 +30,13 @@ class HomeController extends GetxController {
     List<String> roomIds = await getAllMembersInRooms();
     if (roomIds.isNotEmpty) {
       _firestore
-          .collection("anonymous")
+          .collection("user")
           .where(FieldPath.documentId, whereIn: roomIds)
           .snapshots()
           .listen((roomSnapshot) async {
         for (var doc in roomSnapshot.docs) {
           final userId = doc.id;
           final currLoc = doc.get('currLoc');
-          print(currLoc);
           final location = LocationUtils.parseLocation(currLoc);
 
           if (location != null) {
@@ -48,7 +47,7 @@ class HomeController extends GetxController {
           }
 
           // Update user details
-          final dp = await FirebaseApi.getDP("anonymous", userId);
+          final dp = await FirebaseApi.getDP("user", userId);
           List<String> usr = [dp, doc.get('usr')];
           if (doc.data().containsKey("roomId")) {
             usr.addAll(getCommonGroup(doc.get('roomId').cast<String>()));
@@ -63,8 +62,8 @@ class HomeController extends GetxController {
 
   Future<List<String>> getAllMembersInRooms() async {
     roomIds = await FirebaseApi.getRoomMembers(
-      DeviceInfo.deviceId!,
-      "anonymous",
+      DeviceInfo.userUID!,
+      "user",
       "roomId",
     );
 

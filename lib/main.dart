@@ -1,5 +1,7 @@
 import 'package:family_room/controller/network_controller.dart';
+import 'package:family_room/pages/auth/authentication.dart';
 import 'package:family_room/pages/splash_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -28,9 +30,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Get.put(NetworkController(), permanent: true);
-    return const GetMaterialApp(
+    User? user = FirebaseAuth.instance.currentUser;
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      home:
+        user != null ?  SplashScreen():  Authentication(),
     );
   }
 }

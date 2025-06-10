@@ -58,7 +58,7 @@ class ProfileController extends GetxController {
       if (isValid.value) {
         int sts = await FirebaseApi.checkUsernameExists(usr);
         if (sts == 1) {
-          offlineData.refreshUserData(DeviceInfo.deviceId);
+          offlineData.refreshUserData(DeviceInfo.userUID);
           homeController.username.value = usr;
           username.value = usr;
           Get.snackbar(
@@ -82,16 +82,16 @@ class ProfileController extends GetxController {
     if (dpImagePath.value.isNotEmpty &&
         dpImagePath.value != finalDpImagePath.value) {
       String url = await FirebaseFileApi.uploadImage(
-          "${DeviceInfo.deviceId}+${username.value}",
+          "${DeviceInfo.userUID}+${username.value}",
           dpImagePath.value,
           "userDp");
       if (url.isNotEmpty) {
         int res = await FirebaseFileApi.updateImagePath(
-            "anonymous", DeviceInfo.deviceId!, url, "dp");
+            "user", DeviceInfo.userUID!, url, "dp");
         if (res == 0) {
           dpImagePath.value = url;
           finalDpImagePath.value = url;
-          offlineData.refreshUserData(DeviceInfo.deviceId);
+          offlineData.refreshUserData(DeviceInfo.userUID);
           homeController.dpImagePath.value = url;
         } else {
           dpImagePath.value = "";
