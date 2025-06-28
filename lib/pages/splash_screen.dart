@@ -48,7 +48,6 @@ class _SplashScreenState extends State<SplashScreen> {
         (status[Permission.locationWhenInUse]?.isGranted ?? false)) {
       startLocationService();
     } else if ((status[Permission.location]?.isDenied ?? false) ||
-
         (status[Permission.locationAlways]?.isDenied ?? false) ||
         (status[Permission.locationWhenInUse]?.isDenied ?? false)) {
       print('Location permission denied');
@@ -87,8 +86,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (updates != null) {
       final bool isExpired = updates["expire"] as bool? ?? false;
       if (isExpired) {
-        CustomAlert.errorAlert(
-            context, "plesase update your app to get latest features",
+        CustomAlert.errorAlert("plesase update your app to get latest features",
             title: "Update App");
         return; // Exit if the app needs an update
       }
@@ -101,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen> {
     deviceId = DeviceInfo.deviceId;
 
     // 3. Retrieve user details and decide whether to save anonymous data
-    final userInform = await offlineData.getUserDetails();
+    // final userInform = await offlineData.getUserDetails();
     await offlineData.storeObject("uid", user?.uid);
 
     if (!mounted) return;
@@ -113,7 +111,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // 5. Navigate to Home screen
     if (mounted) {
-      Get.off(()=> Home());
+      Get.off(() => Home());
       await startLocationService();
     }
   }
@@ -122,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> initializeLocationTracking() async {
     // await LocationUtils.initializeBatchUpload();
 
-    if(user != null && user?.uid != null){
+    if (user != null && user?.uid != null) {
       FirebaseTprApi.cleanupOldRecords(user!.uid);
     }
     await LocationUtils.getCurrentLocation(

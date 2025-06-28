@@ -20,7 +20,7 @@ class RoomDialogController extends GetxController {
     roomController.clear();
   }
 
-  Future<void> submitForm(BuildContext context) async {
+  Future<void> submitForm() async {
     if ((nameController.text.isEmpty ||
             nameController.text.length < 3 ||
             nameController.text.length > 15) &&
@@ -91,11 +91,9 @@ class RoomDialogController extends GetxController {
             snackPosition: SnackPosition.TOP,
           );
         } else if (response == -4) {
-          if (context.mounted) {
-            Get.back();
-            CustomAlert.errorAlert(context,
-                "You can't connect more than 10 Rooms\nExit the older room to join");
-          }
+          Get.back();
+          CustomAlert.errorAlert(
+              "You can't connect more than 10 Rooms\nExit the older room to join");
         } else {
           Get.snackbar(
             backgroundColor: Colors.red,
@@ -150,11 +148,10 @@ class RoomDialogController extends GetxController {
             snackPosition: SnackPosition.TOP,
           );
         } else if (response == -4) {
-          if (context.mounted) {
             Get.back();
-            CustomAlert.errorAlert(context,
+            CustomAlert.errorAlert(
                 "You can't join more than 10 Rooms;\nThis limit might increase in the future.");
-          }
+
         } else {
           Get.snackbar(
             backgroundColor: Colors.red,

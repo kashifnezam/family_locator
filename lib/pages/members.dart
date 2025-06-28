@@ -120,10 +120,10 @@ class MembersPage extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: GestureDetector(
                 onTap: () async {
-                  await controller.exitGroup(context).then(
+                  await controller.exitGroup().then(
                     (value) {
                       if (value == 0 && context.mounted) {
-                        CustomAlert.successAlert(context,
+                        CustomAlert.successAlert(
                             "You have exited from Room: ${controller.membersMap[0]['GroupName']}");
                       }
                     },
@@ -287,11 +287,10 @@ class MembersPage extends StatelessWidget {
                 onTap: () async {
                   String name = controller.membersMap[memberIndex]["name"];
                   final isConfirm = await CustomAlert.confirmAlert(
-                    context,
                     "Are you sure want to remove \"$name\"?",
                   );
                   if (isConfirm) {
-                     controller.removeMember(memberIndex);
+                    controller.removeMember(memberIndex);
                   }
                   Get.back(); // Close the modal
                 },

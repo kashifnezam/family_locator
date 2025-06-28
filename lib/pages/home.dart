@@ -1,7 +1,9 @@
 import 'package:family_room/controller/home_controller.dart';
 import 'package:family_room/pages/auth/authentication.dart';
 import 'package:family_room/pages/family_room.dart';
-import 'package:family_room/pages/support_us.dart';
+import 'package:family_room/pages/org/organization_page.dart';
+import 'package:family_room/pages/task/add_task_screen.dart';
+import 'package:family_room/pages/task/task_list_screen.dart';
 import 'package:family_room/utils/constants.dart';
 import 'package:family_room/utils/offline_data.dart';
 import 'package:family_room/widgets/custom_widget.dart';
@@ -16,6 +18,7 @@ import 'package:upgrader/upgrader.dart';
 import '../utils/custom_alert.dart';
 import '../utils/device_info.dart';
 import '../widgets/button_widget.dart';
+import '../widgets/marker_widgets.dart';
 import 'edit_profile.dart';
 import 'history_tpr.dart';
 
@@ -97,8 +100,9 @@ class _HomeState extends State<Home> {
             ),
             _buildDrawerItem(
               icon: Icons.cast_connected,
-              color: Colors.white60,
+              color: Colors.white,
               label: "Connections",
+              onTap: () => Get.to(() => TaskListScreen()),
             ),
             _buildDrawerItem(
               icon: Icons.settings,
@@ -106,10 +110,16 @@ class _HomeState extends State<Home> {
               label: "Settings",
               // onTap: () => Get.to(() => const SettingsPage()),
             ),
+            // _buildDrawerItem(
+            //   icon: Icons.account_balance_outlined,
+            //   label: "Donate",
+            //   onTap: () => Get.to(() => SupportUs()),
+            // ),
+
             _buildDrawerItem(
-              icon: Icons.account_balance_outlined,
-              label: "Donate",
-              onTap: () => Get.to(() => SupportUs()),
+              icon: Icons.business,
+              label: "Organization Settings",
+              onTap: () => Get.to(() => OrganizationSettingsPage()),
             ),
             const Divider(color: Colors.white60),
             _buildDrawerItem(
@@ -118,32 +128,31 @@ class _HomeState extends State<Home> {
               label: "Invite Friends",
             ),
             _buildDrawerItem(
-              icon: Icons.login_outlined,
-              label: "Logout",
-              onTap: () async {
-                try {
-                  // 1. Sign out from Firebase
-                  await FirebaseAuth.instance.signOut();
+                icon: Icons.login_outlined,
+                label: "Logout",
+                onTap: () async {
+                  try {
+                    // 1. Sign out from Firebase
+                    await FirebaseAuth.instance.signOut();
 
-                  // 2. Clear offline data (SharedPreferences)
-                  await OfflineData.clearAll();
-                  const platform = MethodChannel('com.kashif.location_service');
-                  await platform.invokeMethod('stopLocationUpdates');
+                    // 2. Clear offline data (SharedPreferences)
+                    await OfflineData.clearAll();
+                    const platform =
+                        MethodChannel('com.kashif.location_service');
+                    await platform.invokeMethod('stopLocationUpdates');
 
-                  // 3. Navigate to authentication screen
-                  Get.offAll(() => const Authentication());
-
-                } catch (e) {
-                  // Optional: Add error handling
-                  debugPrint('Logout error: $e');
-                  CustomAlert.errorAlert(
-                    title: "Logout Failed",
-                    context, // Make sure context is available
-                    "Couldn't logout properly. Please try again.",
-                  );
-                }
-              }
-            ),
+                    // 3. Navigate to authentication screen
+                    Get.offAll(() => AuthenticationView());
+                  } catch (e) {
+                    // Optional: Add error handling
+                    debugPrint('Logout error: $e');
+                    CustomAlert.errorAlert(
+                      title: "Logout Failed",
+                      // Make sure context is available
+                      "Couldn't logout properly. Please try again.",
+                    );
+                  }
+                }),
           ],
         ),
       ),
@@ -185,7 +194,7 @@ class _HomeState extends State<Home> {
                       color: Colors.white),
                 ),
                 Text(
-                  DeviceInfo.userUID ?? "Unknown Device",
+                  controller.email.value,
                   style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -220,10 +229,14 @@ class _HomeState extends State<Home> {
       () => FlutterMap(
         mapController: controller.mapController,
         options: MapOptions(
-          interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag),
+          maxZoom: 18,
+          keepAlive: true,
           minZoom: 0.2,
           initialRotation: 0,
+          interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.pinchZoom |
+                  InteractiveFlag.drag |
+                  InteractiveFlag.flingAnimation),
           backgroundColor: Colors.blue.shade100,
           onMapReady: () async {
             await Future.delayed(Duration(
@@ -245,7 +258,13 @@ class _HomeState extends State<Home> {
           ),
           MarkerClusterLayerWidget(
             options: MarkerClusterLayerOptions(
-              maxClusterRadius: 45,
+              maxClusterRadius: 120,
+              disableClusteringAtZoom: 15,
+              // Cluster until this zoom level
+              spiderfyCircleRadius: 80,
+              spiderfySpiralDistanceMultiplier: 2,
+              showPolygon: false,
+              // Disable polygon for performance
               size: const Size(40, 40),
               alignment: Alignment.center,
               padding: const EdgeInsets.all(50),
@@ -327,127 +346,13 @@ class _HomeState extends State<Home> {
         point: location,
         width: 40,
         height: 40,
-        child: GestureDetector(
-          onDoubleTap: () => controller.selectLocation(location),
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  title: Text(
-                    'User Info',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Profile picture on top
-                      CircleAvatar(
-                        backgroundColor: Colors.blueGrey,
-                        radius: AppConstants.width * 0.12,
-                        child: userDetails[0].isNotEmpty
-                            ? CustomWidget.getImage(userDetails[0])
-                            : Text(
-                                controller.username.value
-                                    .substring(0, 2)
-                                    .toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                      SizedBox(
-                          height: 16), // Space between profile picture and text
-                      // User information text
-                      Text(
-                        userDetails.isNotEmpty && userDetails.length > 1
-                            ? "Name: ${userDetails[1]}\nRooms: ${userDetails.skip(2).join(', ')}"
-                            : "No user information available.",
-                        style: TextStyle(fontSize: 16),
-                        textAlign: TextAlign
-                            .center, // Center the text for better alignment
-                      ),
-                    ],
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () {
-                        Get.back(); // Close the dialog
-                      },
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Get.to(() => HistoryTPR(
-                              userId: userId,
-                              userDetails: userDetails,
-                            ));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.blueAccent, // Text color
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(10), // Rounded corners
-                        ),
-                      ),
-                      child: Text('View History'),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-          child: Tooltip(
-            message: userDetails.length > 1 ? userDetails[1] : "Unknown User",
-            child: _buildMarkerContent(initials, userId, userDetails),
-          ),
+        child: UserMarkerWidget(
+          userId: userId,
+          userDetails: userDetails,
+          location: location,
+          isCurrentUser: userId == DeviceInfo.userUID,
         ),
       );
     }).toList();
-  }
-
-// Build the marker content based on user details
-  Widget _buildMarkerContent(
-      String initials, String userId, List<String> userDetails) {
-    return userDetails.isNotEmpty &&
-            userDetails[0].isNotEmpty &&
-            userId != DeviceInfo.userUID
-        ? Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.red),
-              shape: BoxShape.circle,
-            ),
-            child: CustomWidget.getImage(userDetails[0]),
-          )
-        : Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black),
-              color: userId == DeviceInfo.userUID
-                  ? Colors.blueGrey
-                  : Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                initials,
-                style: TextStyle(
-                  color: userId == DeviceInfo.userUID
-                      ? Colors.white
-                      : Colors.green,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          );
   }
 }

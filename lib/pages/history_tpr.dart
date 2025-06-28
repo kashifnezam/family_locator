@@ -57,12 +57,13 @@ class HistoryTPR extends StatelessWidget {
               final result = await showOmniDateTimeRangePicker(
                 context: context,
                 startInitialDate: today,
-                startFirstDate:
-                    twoDaysAgo, // Allow selection starting from two days ago
-                startLastDate:
-                    today, // Enable today as the last selectable date
+                startFirstDate: twoDaysAgo,
+                // Allow selection starting from two days ago
+                startLastDate: today,
+                // Enable today as the last selectable date
                 endInitialDate: today,
-                endFirstDate: twoDaysAgo, // Same restriction for the end date
+                endFirstDate: twoDaysAgo,
+                // Same restriction for the end date
                 endLastDate: today,
                 is24HourMode: false,
                 isShowSeconds: false,
@@ -150,11 +151,42 @@ class HistoryTPR extends StatelessWidget {
                         ),
                       );
                     }),
-
-                    // Red flag for the last point
+                    if (controller.polylinePoints.isNotEmpty)
+                      Marker(
+                        point: controller.polylinePoints.first,
+                        child: GestureDetector(
+                          onTap: () => CustomWidget.confirmDialogue(
+                            title: "Start Time",
+                            content: controller.markerInfo[0],
+                            isCancel: false,
+                          ),
+                          child: Icon(
+                            Icons.flag,
+                            color: Colors.green,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    if (controller.polylinePoints.isNotEmpty)
+                      Marker(
+                        width: 30,
+                        height: 30,
+                        point: controller.polylinePoints.last,
+                        child: GestureDetector(
+                          onTap: () => CustomWidget.confirmDialogue(
+                              title: "End Time",
+                              content: controller.markerInfo[1],
+                              isCancel: false),
+                          child: Icon(
+                            Icons.flag,
+                            color: Colors.red,
+                            size: 24,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-                MarkerClusterLayerWidget(
+                /* MarkerClusterLayerWidget(
                   options: MarkerClusterLayerOptions(
                     maxClusterRadius: 45,
                     size: const Size(40, 40),
@@ -214,7 +246,7 @@ class HistoryTPR extends StatelessWidget {
                       );
                     },
                   ),
-                )
+                )*/
               ],
             ),
             if (controller.isLoading.value)

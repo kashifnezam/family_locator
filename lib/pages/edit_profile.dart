@@ -1,11 +1,8 @@
 import 'dart:io';
-
 import 'package:family_room/controller/profile_controller.dart';
-import 'package:family_room/widgets/button_widget.dart';
 import 'package:family_room/widgets/custom_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../utils/constants.dart';
 
 class EditProfile extends StatefulWidget {
@@ -17,107 +14,167 @@ class EditProfile extends StatefulWidget {
 
 class _EditProfileState extends State<EditProfile> {
   final ProfileController _controller = Get.put(ProfileController());
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
-    _controller.getUserNameDP();
+    _controller.getUserProfileData();
     return Scaffold(
-        appBar: AppBar(
-          title: const Text("Profile"),
-          actions: [
-            Obx(
-              () => Row(
-                children: [
-                  if (_controller.userNameEdit.value ||
-                      _controller.isLoad.value)
-                    GestureDetector(
-                      onTap: () {
-                        _controller.submitForm();
-                        _controller.userNameEdit.value = false;
-                        _controller.userNameController.text =
-                            _controller.username.value;
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: !_controller.isLoad.value
-                            ? ButtonWidget.elevatedBtn(
-                                "Save",
-                                height: AppConstants.height * 0.05,
-                                width: AppConstants.width * 0.2,
-                              )
-                            : Padding(
-                                padding: EdgeInsets.only(
-                                    right: AppConstants.width * 0.2),
-                                child: CustomWidget
-                                    .buildCircularProgressIndicator(),
-                              ),
-                      ),
+      appBar: _buildAppBar(),
+      body: Obx(() {
+        return Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildProfilePictureSection(),
+                    const SizedBox(height: 20),
+                    _buildProfileField(
+                      label: "Full Name",
+                      icon: Icons.person_outline,
+                      value: _controller.fullName.value,
+                      controller: _controller.fullNameController,
+                      enabled: _controller.isEditing.value,
+                      validator: (value) => value?.isEmpty ?? true
+                          ? 'Please enter your full name'
+                          : null,
                     ),
-                  if (_controller.userNameEdit.value &&
-                      !_controller.isLoad.value)
-                    GestureDetector(
-                      onTap: () {
-                        _controller.userNameEdit.value = false;
-                        _controller.userNameController.text =
-                            _controller.username.value;
-                        _controller.dpImagePath.value =
-                            _controller.finalDpImagePath.value;
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ButtonWidget.elevatedBtn("Cancel",
-                            height: AppConstants.height * 0.05,
-                            width: AppConstants.width * 0.2,
-                            disabled: true),
-                      ),
-                    ),
-                ],
-              ),
-            )
-          ],
-        ),
-        body: Obx(
-          () {
-            return ListView(
-              children: [
-                _buildProfilePictureSection(),
-                const SizedBox(height: 20),
-                if (!_controller.userNameEdit.value)
-                  ListTile(
-                    leading: const Icon(Icons.person_4_sharp),
-                    title: Text(_controller.username.value),
-                    subtitle: const Text(
-                      "username",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    trailing: GestureDetector(
-                        onTap: () {
-                          _controller.userNameEdit.value = true;
-                        },
-                        child: const Icon(Icons.edit)),
-                  ),
-                if (_controller.userNameEdit.value)
-                  ListTile(
-                    leading: const Icon(Icons.person_4_sharp),
-                    title: TextField(
+                    _buildProfileField(
+                      label: "Username",
+                      icon: Icons.alternate_email,
+                      value: _controller.username.value,
                       controller: _controller.userNameController,
-                      maxLines: 1,
-                      decoration: InputDecoration(
-                        labelText: 'Enter Username',
-                        border: OutlineInputBorder(),
-                        errorText: _controller.isValid.value
-                            ? null
-                            : _controller.isNotValidMsg.toString(),
-                      ),
+                      enabled: _controller.isEditing.value,
+                      validator: (value) {
+                        _controller.validateUsername(value);
+                        if (_controller.isNotValidMsg.value.isNotEmpty) {
+                          return _controller.isNotValidMsg.value;
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-              ],
-            );
-          },
-        ));
+                    _buildProfileField(
+                      label: "Email",
+                      readOnly: true,
+                      icon: Icons.email_outlined,
+                      value: _controller.email.value,
+                      controller: _controller.emailController,
+                      enabled: _controller.isEditing.value,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) => value?.isEmail ?? false
+                          ? null
+                          : 'Enter a valid email',
+                    ),
+                    _buildProfileField(
+                      label: "Mobile Number",
+                      icon: Icons.phone_android,
+                      value: _controller.mobile.value,
+                      controller: _controller.mobileController,
+                      enabled: _controller.isEditing.value,
+                      keyboardType: TextInputType.phone,
+                      validator: (value) => value?.isPhoneNumber ?? false
+                          ? null
+                          : 'Enter valid phone number',
+                    ),
+                    if (_controller.isEditing.value) _buildSaveButton(),
+
+                  ],
+
+                ),
+              ),
+            ),
+          ],
+        );
+      }),
+    );
   }
 
-  /// Builds the profile picture section with an editable avatar.
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: const Text("My Profile"),
+      actions: [
+        Obx(() => IconButton(
+              icon: Icon(
+                _controller.isEditing.value ? Icons.close : Icons.edit,
+                color: Colors.black,
+              ),
+              onPressed: () {
+                if (_controller.isEditing.value) {
+                  _controller.cancelEditing();
+                } else {
+                  _controller.startEditing();
+                }
+              },
+            )),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      onPressed: _submitForm,
+      icon: _controller.isLoading.value
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Icon(Icons.check),
+      label: _controller.isLoading.value
+          ? const Text("Saving...")
+          : const Text("SAVE CHANGES"),
+    );
+  }
+
+  Widget _buildProfileField({
+    required String label,
+    required IconData icon,
+    required String value,
+    required TextEditingController controller,
+    required bool enabled,
+    bool readOnly = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: TextFormField(
+        controller: controller..text = value,
+        enabled: enabled,
+        keyboardType: keyboardType,
+        readOnly: readOnly,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: const OutlineInputBorder(),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      _controller.submitForm();
+    }
+  }
+
   Widget _buildProfilePictureSection() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 15),
@@ -157,21 +214,19 @@ class _EditProfileState extends State<EditProfile> {
                           ),
               );
             }),
-            _buildEditIcon(),
+            if (_controller.isEditing.value) _buildEditIcon(),
           ],
         ),
       ),
     );
   }
 
-  /// Builds the edit icon that appears on the profile picture.
   Widget _buildEditIcon() {
     return Positioned(
       bottom: 20,
       right: 10,
       child: GestureDetector(
         onTap: () async {
-          // Opens image picker and updates the profile image
           String tempPath = await CustomWidget.imagePickFrom();
           if (tempPath.isNotEmpty) {
             _controller.dpImagePath.value = tempPath;
@@ -181,7 +236,7 @@ class _EditProfileState extends State<EditProfile> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: const BoxDecoration(
-            color: Colors.blue, // Background color for the edit icon
+            color: Colors.blue,
             shape: BoxShape.circle,
           ),
           child: const Icon(

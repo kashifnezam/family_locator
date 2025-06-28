@@ -63,24 +63,23 @@ class MembersController extends GetxController {
     }
   }
 
-  Future<int> exitGroup(BuildContext context) async {
+  Future<int> exitGroup() async {
     final isConfirm = await CustomAlert.confirmAlert(
-      context,
       "Are you sure you want to leave \"${membersMap[0]['GroupName']}\"?",
     );
 
     if (!isConfirm) return -1;
 
-    if (context.mounted) CustomAlert.loadAlert(context, "Please wait...");
+    CustomAlert.loadAlert("Please wait...");
 
     try {
       final exitResult =
           await FirebaseApi.removeMember(membersMap[0]['roomId'], user.value);
 
       if (exitResult != 0) {
-        if (context.mounted) {
-          CustomAlert.errorAlert(context, "Failed to exit the group.");
-        }
+
+          CustomAlert.errorAlert("Failed to exit the group.");
+
         return -1;
       }
 
@@ -95,12 +94,12 @@ class MembersController extends GetxController {
       Get.back();
       return 0;
     } catch (e) {
-      if (context.mounted) {
-        CustomAlert.errorAlert(context, "An error occurred: $e");
-      }
+
+        CustomAlert.errorAlert("An error occurred: $e");
+
       return -1;
     } finally {
-      if (context.mounted) CustomAlert.dismissAlert(context);
+      CustomAlert.dismissAlert();
     }
   }
 

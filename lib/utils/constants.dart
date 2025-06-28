@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 
 
 class AppConstants {
+  static const authDomain = "familykashif.auth";
   static const String appTitle = 'Family Locator';
   static Logger log = Logger();
   static double height = Get.height;
@@ -34,5 +35,13 @@ class MapConstants {
     const LatLng(35.6745457, 97.395561), // Northeast corner of India
   );
 
-  static final cacheStore =  MemCacheStore();
+  static final cacheStore = MemCacheStore(
+    // Maximum size of a single cached tile (in bytes)
+    maxEntrySize: 5 * 1024 * 1024, // 5MB per tile
+
+    // Total maximum size of the cache (in bytes)
+    maxSize: 100 * 1024 * 1024, // 100MB total cache
+
+    // Optional: How long to keep tiles in cache
+  );
 }

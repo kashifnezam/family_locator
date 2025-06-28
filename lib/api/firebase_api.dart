@@ -1,32 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_room/models/anonymous_model.dart';
-import 'package:family_room/models/user_model.dart';
 import 'package:family_room/utils/device_info.dart';
 import 'package:family_room/widgets/custom_widget.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
 import '../models/message_model.dart';
 import '../utils/constants.dart';
 import '../utils/offline_data.dart';
 
 class FirebaseApi {
-  static final FirebaseFirestore _firestore = FirebaseFirestore. instance;
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   // Fetch data from Firestore
-  static Future<List<UserModel>> fetchData(String col) async {
-    List<UserModel> groupMembers = [];
-    try {
-      CollectionReference membersCollection = _firestore.collection(col);
-
-      QuerySnapshot snapshot = await membersCollection.get();
-
-      groupMembers = snapshot.docs
-          .map((doc) => UserModel.fromJson(doc.data() as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      AppConstants.log.e("Error fetching group members", error: e.toString());
-    }
-    return groupMembers;
-  }
 
   static Future<void> updateLocation(String loc, String id) async {
     _firestore
@@ -34,82 +17,6 @@ class FirebaseApi {
         .doc(id)
         .set({'currLoc': loc}, SetOptions(merge: true));
   }
-
-  // Fetch a specific document by ID within a specific collection
-  static Future<UserModel?> fetchDocumentById(String col, String userId) async {
-    try {
-      DocumentReference documentReference =
-          _firestore.collection(col).doc(userId);
-
-      DocumentSnapshot documentSnapshot = await documentReference.get();
-
-      if (documentSnapshot.exists) {
-        return UserModel.fromJson(
-            documentSnapshot.data() as Map<String, dynamic>);
-      } else {
-        AppConstants.log
-            .w("Document with ID $userId does not exist in collection $col.");
-        return null; // Document does not exist
-      }
-    } catch (e) {
-      AppConstants.log.e(
-          "Error fetching document with ID $userId from collection $col",
-          error: e.toString());
-      return null; // Return null in case of error
-    }
-  }
-
-  // Add data to Firestore
-  static Future<bool> addData(String col, UserModel user) async {
-    try {
-      CollectionReference membersCollection = _firestore.collection(col);
-
-      await membersCollection.add(user.toJson());
-      AppConstants.log.i("User added successfully to $col.");
-      return true; // Operation successful
-    } catch (e) {
-      AppConstants.log.e("Error adding group member", error: e.toString());
-      return false; // Operation failed
-    }
-  }
-
-  static Future<bool> addDataToDocument(
-      String col, String docId, UserModel user) async {
-    user.added = DateTime.now().toString();
-    user.email = FirebaseAuth.instance.currentUser!.email.toString();
-    try {
-      // Reference to the specific document
-      DocumentReference documentReference =
-          _firestore.collection(col).doc(docId);
-
-      // Set the data in the document
-      await documentReference.set(user.toJson(), SetOptions(merge: true));
-      AppConstants.log.i(
-          "User data added successfully to document $docId in collection $col.");
-      return true; // Operation successful
-    } catch (e) {
-      AppConstants.log.e(
-          "Error adding user data to document $docId in collection $col",
-          error: e.toString());
-      return false; // Operation failed
-    }
-  }
-
-  // Update data in Firestore
-  static Future<bool> updateData(
-      String col, String docId, UserModel updatedUser) async {
-    try {
-      DocumentReference memberDocument = _firestore.collection(col).doc(docId);
-
-      await memberDocument.set(updatedUser.toJson(), SetOptions(merge: true));
-      AppConstants.log.i("User updated successfully in $col.");
-      return true; // Operation successful
-    } catch (e) {
-      AppConstants.log.e("Error updating group member", error: e.toString());
-      return false; // Operation failed
-    }
-  }
-
   //For anonymous user
   static Future<bool> addAnonymousData(
       String collection, String documentId, AnonymousModel data) async {
@@ -265,10 +172,7 @@ class FirebaseApi {
         }
 
         // If no such username, update the 'usr' field with the new username
-        await FirebaseFirestore.instance
-            .collection('user')
-            .doc(uid)
-            .set({
+        await FirebaseFirestore.instance.collection('user').doc(uid).set({
           'usr': username,
         }, SetOptions(merge: true));
       }

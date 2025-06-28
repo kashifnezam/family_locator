@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -32,9 +34,10 @@ class MyApp extends StatelessWidget {
     Get.put(NetworkController(), permanent: true);
     User? user = FirebaseAuth.instance.currentUser;
     return GetMaterialApp(
+      navigatorKey: navigatorKey,  // Assign the key
       debugShowCheckedModeBanner: false,
       home:
-        user != null ?  SplashScreen():  Authentication(),
+        user != null ?  SplashScreen():  AuthenticationView(),
     );
   }
 }

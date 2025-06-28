@@ -32,10 +32,11 @@ class OfflineData {
 
     try {
       DocumentSnapshot userSnapshot =
-          await firestore.collection("user").doc(userId).get();
+      await firestore.collection("user").doc(userId).get();
       if (userSnapshot.exists) {
-        // Update both cache and SharedPreferences
-        _cachedUserData = userSnapshot.data() as Map<String, dynamic>?;
+        // Convert Firestore data to a JSON-serializable map
+        _cachedUserData = _convertFirestoreToJson(userSnapshot.data() as Map<String, dynamic>);
+
         if (_cachedUserData != null) {
           String userJson = jsonEncode(_cachedUserData);
           _prefs!.setString("user_details", userJson);
@@ -49,6 +50,35 @@ class OfflineData {
     }
   }
 
+  /// Helper function to convert Firestore-specific types to JSON-serializable types
+  Map<String, dynamic> _convertFirestoreToJson(Map<String, dynamic> data) {
+    return data.map((key, value) {
+      if (value is Timestamp) {
+        // Convert Timestamp to ISO string or milliseconds since epoch
+        return MapEntry(key, value.toDate().toIso8601String());
+      } else if (value is GeoPoint) {
+        // Convert GeoPoint to {lat: x, lng: y}
+        return MapEntry(key, {'lat': value.latitude, 'lng': value.longitude});
+      } else if (value is DocumentReference) {
+        // Convert DocumentReference to path string
+        return MapEntry(key, value.path);
+      } else if (value is Map<String, dynamic>) {
+        // Recursively handle nested maps
+        return MapEntry(key, _convertFirestoreToJson(value));
+      } else if (value is List) {
+        // Handle lists that might contain Firestore types
+        return MapEntry(key, value.map((item) {
+          if (item is Map<String, dynamic>) {
+            return _convertFirestoreToJson(item);
+          } else if (item is Timestamp) {
+            return item.toDate().toIso8601String();
+          }
+          return item;
+        }).toList());
+      }
+      return MapEntry(key, value);
+    });
+  }
   // Get user details with caching to avoid redundant SharedPreferences calls
   Future<Map<String, dynamic>?> getUserDetails() async {
     // Return from cache if data is already loaded

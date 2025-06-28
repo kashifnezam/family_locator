@@ -18,6 +18,7 @@ class HomeController extends GetxController {
   final mapController = MapController();
   RxString dpImagePath = "".obs;
   RxString username = "Not Available".obs;
+  RxString email = "Not Available".obs;
 
   @override
   void onInit() {
@@ -114,5 +115,7 @@ class HomeController extends GetxController {
   getUserNameDP() async {
     username.value = userInfo?["usr"] ?? "Not Available";
     dpImagePath.value = userInfo?["dp"] ?? "NA";
+    email.value = userInfo?["email"] ?? "NA";
+
   }
 }

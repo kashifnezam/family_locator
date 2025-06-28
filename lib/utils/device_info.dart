@@ -23,6 +23,7 @@ class DeviceInfo {
       AppConstants.log.i('Device ID: $deviceId');
 
       userUID = FirebaseAuth.instance.currentUser?.uid;
+      AppConstants.log.i('userUID: $userUID');
     } catch (e) {
       AppConstants.log.e('Error in getDetails: $e');
     }

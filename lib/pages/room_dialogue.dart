@@ -159,7 +159,7 @@ class RoomDialog extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    controller.submitForm(context);
+                    controller.submitForm();
                   },
                   child: Obx(() => controller.isLoading.value
                       ? CustomWidget.buildCircularProgressIndicator()

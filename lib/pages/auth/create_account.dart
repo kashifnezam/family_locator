@@ -1,25 +1,23 @@
+// views/create_account_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import '../../controller/create_account_controller.dart';
 
-import '../../api/firebase_auth.dart';
+class CreateAccountView extends StatelessWidget {
+  final CreateAccountController _controller = Get.put(CreateAccountController());
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _passController = TextEditingController();
+  final TextEditingController _confirmPassController = TextEditingController();
+  final RxBool _obscurePassword = true.obs;
+  final RxBool _obscureConfirmPassword = true.obs;
 
-class CreateAccount extends StatefulWidget {
-  const CreateAccount({super.key});
+  CreateAccountView({super.key});
 
-  @override
-  State<CreateAccount> createState() => _CreateAccountState();
-}
-
-class _CreateAccountState extends State<CreateAccount> {
   @override
   Widget build(BuildContext context) {
-    TextEditingController fullNameController = TextEditingController();
-    TextEditingController emailController = TextEditingController();
-    TextEditingController mobileController = TextEditingController();
-    TextEditingController passConroller = TextEditingController();
-    TextEditingController cnfPassController = TextEditingController();
-
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -32,217 +30,141 @@ class _CreateAccountState extends State<CreateAccount> {
       body: Container(
         alignment: Alignment.center,
         margin: const EdgeInsets.only(top: 12, left: 30, right: 30),
-        child: ListView(
+        child: Obx(() => ListView(
           children: [
             Lottie.asset("assets/animations/signup.json", height: 150),
-            TextField(
-              controller: fullNameController,
-              decoration: InputDecoration(
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.indigo, width: 2),
-                ),
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                labelText: "Full Name",
-                labelStyle: const TextStyle(fontSize: 18, color: Colors.indigo),
-                prefixIcon: Icon(
-                  Icons.person,
+
+            // Full Name Field
+            _buildTextField(
+              controller: _fullNameController,
+              label: "Full Name",
+              icon: Icons.person,
+            ),
+            const SizedBox(height: 20),
+
+            // Email Field
+            _buildTextField(
+              controller: _emailController,
+              label: "Email",
+              icon: Icons.email_rounded,
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 20),
+
+            // Mobile Field
+            _buildTextField(
+              controller: _mobileController,
+              label: "Mobile Number",
+              icon: Icons.phone,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 20),
+
+            // Password Field
+            Obx(() => _buildTextField(
+              controller: _passController,
+              label: "Password",
+              icon: Icons.password,
+              obscureText: _obscurePassword.value,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword.value ? Icons.visibility : Icons.visibility_off,
                   color: Colors.indigo.shade300,
                 ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(width: 1, color: Colors.indigo),
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                ),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                  borderSide: BorderSide(style: BorderStyle.solid),
-                ),
+                onPressed: () => _obscurePassword.toggle(),
               ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                labelText: "Email",
-                labelStyle: const TextStyle(fontSize: 18, color: Colors.indigo),
-                prefixIcon: Icon(
-                  Icons.email_rounded,
+            )),
+            const SizedBox(height: 20),
+
+            // Confirm Password Field
+            Obx(() => _buildTextField(
+              controller: _confirmPassController,
+              label: "Confirm Password",
+              icon: Icons.password,
+              obscureText: _obscureConfirmPassword.value,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureConfirmPassword.value ? Icons.visibility : Icons.visibility_off,
                   color: Colors.indigo.shade300,
                 ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.indigo, width: 2),
-                ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(width: 1, color: Colors.indigo),
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                ),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                  borderSide: BorderSide(style: BorderStyle.solid),
-                ),
+                onPressed: () => _obscureConfirmPassword.toggle(),
               ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            TextField(
-              controller: mobileController,
-              decoration: InputDecoration(
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                labelText: "Mobile Number",
-                labelStyle: const TextStyle(fontSize: 18, color: Colors.indigo),
-                prefixIcon: Icon(
-                  Icons.numbers,
-                  color: Colors.indigo.shade300,
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.indigo, width: 2),
-                ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(width: 1, color: Colors.indigo),
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                ),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                  borderSide: BorderSide(style: BorderStyle.solid),
-                ),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            TextField(
-              controller: passConroller,
-              decoration: InputDecoration(
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                labelText: "Password",
-                labelStyle: const TextStyle(fontSize: 18, color: Colors.indigo),
-                prefixIcon: Icon(
-                  Icons.password,
-                  color: Colors.indigo.shade300,
-                ),
-                suffixIcon: Icon(
-                  Icons.visibility,
-                  color: Colors.indigo.shade300,
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.indigo, width: 2),
-                ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(width: 1, color: Colors.indigo),
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                ),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                  borderSide: BorderSide(style: BorderStyle.solid),
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            TextField(
-              controller: cnfPassController,
-              decoration: InputDecoration(
-                floatingLabelAlignment: FloatingLabelAlignment.center,
-                labelText: "Confirm Password",
-                labelStyle: const TextStyle(fontSize: 18, color: Colors.indigo),
-                prefixIcon: Icon(
-                  Icons.password,
-                  color: Colors.indigo.shade300,
-                ),
-                suffixIcon: Icon(
-                  Icons.visibility,
-                  color: Colors.indigo.shade300,
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.indigo, width: 2),
-                ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(width: 1, color: Colors.indigo),
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                ),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(13),
-                  ),
-                  borderSide: BorderSide(style: BorderStyle.solid),
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
+            )),
+            const SizedBox(height: 20),
+
+            // Sign Up Button
             SizedBox(
               height: 45,
               child: ElevatedButton(
-                onPressed: () {
-                  // Get.back();
-                  String fullname = fullNameController.text.trim();
-                  String email = emailController.text.trim();
-                  var mobile = mobileController.text.trim();
-                  var pass = passConroller.text.trim();
-                  signUp(fullname, mobile, email, pass, context);
-                },
-                style: const ButtonStyle(
-                  backgroundColor: MaterialStatePropertyAll(
-                    Colors.indigo,
-                  ),
+                onPressed: _controller.isLoading.value ? null : () => _controller.signUp(
+                  fullname: _fullNameController.text.trim(),
+                  mobile: _mobileController.text.trim(),
+                  email: _emailController.text.trim(),
+                  password: _passController.text.trim(),
+                  confirmPassword: _confirmPassController.text.trim(),
                 ),
-                child: const Text(
-                  "Sign Up",
-                  style: TextStyle(fontSize: 18, letterSpacing: 2, color: Colors.white),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  disabledBackgroundColor: Colors.indigo.withValues(alpha: 0.5),
                 ),
-              ),
-            ),
-            const SizedBox(
-              height: 30,
-            ),
-            Container(
-              decoration:
-              BoxDecoration(border: Border.all(color: Colors.indigo), borderRadius: BorderRadius.all(Radius.circular(20),),),
-              height: 45,
-              child: ElevatedButton(
-                onPressed: () {
-                  Get.back();
-                },
-                style: const ButtonStyle(
-                  backgroundColor: MaterialStatePropertyAll(
-                    Colors.white,
-                  ),
-                ),
-                child: const Text(
-                  "Sign In",
-                  style: TextStyle(
-                      color: Colors.indigo, fontSize: 18, letterSpacing: 2),
+                child: _controller.isLoading.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                  "Create Business Account",
+                  style: TextStyle(letterSpacing: 2, color: Colors.white),
                 ),
               ),
             ),
-            const SizedBox(
-              height: 30,
+            const SizedBox(height: 20),
+
+            // Sign In Button
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.indigo),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                minimumSize: const Size.fromHeight(45),
+              ),
+              onPressed: () => Get.back(),
+              child: const Text(
+                "Login",
+                style: TextStyle(color: Colors.indigo, letterSpacing: 2),
+              ),
             ),
+            const SizedBox(height: 30),
           ],
+        )),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    Widget? suffixIcon,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.indigo),
+        prefixIcon: Icon(icon, color: Colors.indigo.shade300),
+        suffixIcon: suffixIcon,
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.indigo, width: 2),
+        ),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(width: 1, color: Colors.indigo),
+          borderRadius: BorderRadius.all(Radius.circular(13)),
+        ),
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(13)),
         ),
       ),
     );
