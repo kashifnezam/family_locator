@@ -1,4 +1,6 @@
 // constants.dart
+import 'dart:ui';
+
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -44,4 +46,26 @@ class MapConstants {
 
     // Optional: How long to keep tiles in cache
   );
+}
+
+// Define your color palette
+class AppColors {
+  static const Color primary = Color(0xFF4361EE);  // Vibrant blue
+  static const Color secondary = Color(0xFF3F37C9);  // Darker blue
+  static const Color accent = Color(0xFF4CC9F0);  // Light blue
+  static const Color background = Color(0xFFF8F9FA);  // Light grey
+  static const Color surface = Color(0xFFFFFFFF);  // White
+  static const Color error = Color(0xFFE63946);  // Red
+  static const Color success = Color(0xFF2EC4B6);  // Teal
+  static const Color warning = Color(0xFFFFBF69);  // Orange
+
+  // Text colors
+  static const Color textPrimary = Color(0xFF212529);
+  static const Color textSecondary = Color(0xFF6C757D);
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
+
+  // Status colors
+  static const Color statusActive = Color(0xFF38B000);
+  static const Color statusInactive = Color(0xFF6C757D);
+  static const Color statusPending = Color(0xFFFFBF69);
 }

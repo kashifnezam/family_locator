@@ -99,7 +99,7 @@ class AuthService {
 
       // 3. Save user data
       await FirebaseFirestore.instance
-          .collection("users")
+          .collection("user")
           .doc(userCredential.user?.uid)
           .set({
         'fullname': fullname,

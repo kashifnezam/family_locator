@@ -29,6 +29,7 @@ class HomeController extends GetxController {
 
   fetchLocations() async {
     List<String> roomIds = await getAllMembersInRooms();
+
     if (roomIds.isNotEmpty) {
       _firestore
           .collection("user")
@@ -36,23 +37,38 @@ class HomeController extends GetxController {
           .snapshots()
           .listen((roomSnapshot) async {
         for (var doc in roomSnapshot.docs) {
+          final data = doc.data(); // easier to reuse
           final userId = doc.id;
-          final currLoc = doc.get('currLoc');
-          final location = LocationUtils.parseLocation(currLoc);
 
-          if (location != null) {
-            // Update only if location has changed
-            if (userLocations[userId] != location) {
-              userLocations[userId] = location;
+          // --- Handle location safely ---
+          if (data.containsKey('currLoc') && data['currLoc'] != null) {
+            final currLoc = data['currLoc'];
+            final location = LocationUtils.parseLocation(currLoc);
+
+            if (location != null) {
+              // Update only if location has changed
+              if (userLocations[userId] != location) {
+                userLocations[userId] = location;
+              }
             }
+          } else {
+            // Optional: you can decide what to do if no currLoc
+            // e.g. remove from map:
+            // userLocations.remove(userId);
           }
 
-          // Update user details
+          // --- Update user details ---
           final dp = await FirebaseApi.getDP("user", userId);
-          List<String> usr = [dp, doc.get('usr')];
-          if (doc.data().containsKey("roomId")) {
-            usr.addAll(getCommonGroup(doc.get('roomId').cast<String>()));
+
+          // usr name might also be missing, so be defensive
+          final userName = data['usr'] ?? '';
+
+          List<String> usr = [dp, userName];
+
+          if (data.containsKey("roomId") && data["roomId"] != null) {
+            usr.addAll(getCommonGroup(List<String>.from(data["roomId"])));
           }
+
           userDetails[userId] = usr;
         }
       });

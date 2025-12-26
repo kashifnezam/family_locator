@@ -251,6 +251,7 @@ class _HomeState extends State<Home> {
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: "com.kashif.family_room",
             tileProvider: CachedTileProvider(
               // use the store for your CachedTileProvider instance
               store: MapConstants.cacheStore,
@@ -355,4 +356,5 @@ class _HomeState extends State<Home> {
       );
     }).toList();
   }
+
 }

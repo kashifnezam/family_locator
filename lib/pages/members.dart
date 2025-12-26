@@ -26,7 +26,9 @@ class MembersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    isOwner = controller.user.value == controller.membersMap[0]['ownerId'];
+    final hasGroupInfo = controller.membersMap.isNotEmpty;
+
+    isOwner = hasGroupInfo && controller.user.value == controller.membersMap[0]['ownerId'];
     return Scaffold(
       appBar: AppBar(
         title: const Text('Room Members'),
@@ -122,7 +124,7 @@ class MembersPage extends StatelessWidget {
                 onTap: () async {
                   await controller.exitGroup().then(
                     (value) {
-                      if (value == 0 && context.mounted) {
+                      if (value == 0 && context.mounted && controller.membersMap.isNotEmpty) {
                         CustomAlert.successAlert(
                             "You have exited from Room: ${controller.membersMap[0]['GroupName']}");
                       }
@@ -217,8 +219,18 @@ class MembersPage extends StatelessWidget {
   }
 
   Widget _buildMemberList() {
+    final total = controller.membersMap.length;
+
+    // first element (index 0) is group info, so members start from index 1
+    final memberCount = total > 1 ? total - 1 : 0;
+
+    if (memberCount == 0) {
+      return const Center(
+        child: Text('No members found'),
+      );
+    }
     return ListView.builder(
-      itemCount: controller.membersMap.length - 1, // Exclude group info
+      itemCount: memberCount, // Exclude group info
       itemBuilder: (context, index) {
         final member =
             controller.membersMap[index + 1]; // Skip group info at index 0
